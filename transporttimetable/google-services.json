@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "948612348120",
+    "project_id": "coursework-383717",
+    "storage_bucket": "coursework-383717.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:948612348120:android:2afbf2be043992fd4cbfad",
+        "android_client_info": {
+          "package_name": "com.example.transporttimetable"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "948612348120-1lqtfene877t4hrn7fofabrja3cfk2v8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCn80tAqKH5C1Gm0xsayjmGJ8BA7WsmHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "948612348120-1lqtfene877t4hrn7fofabrja3cfk2v8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">TransportTimetable</string>
+    <string name="title_view">Донецк</string>
+    <string name="title">Карта Донецка</string>
+    <string name="switchText">Трафик</string>
+
+    <string name="back4app_server_url">https://parseapi.back4app.com/</string>
+
+    <!-- Paste BOTH strings as required -->
+    <string name="back4app_app_id">cLG0TvsiJn5VtZYVNUyMKBVD3JtJtrIH1HUtzDmu</string>
+    <string name="back4app_client_key">jDJCGas7B5yUBM7DvoEqVCOCLTGoxMd27mxarKLK</string>
+    <string name="viewOnMap">Показать на карте</string>
+    <string name="station">Остановки</string>
+    <string name="trolleybus">Троллейбус</string>
+    <string name="route">Маршруты</string>
+    <string name="returnDirection">Обратный</string>
+    <string name="subway">Трамвай</string>
+    <string name="direct">Прямой</string>
+    <string name="bus">Автобус</string>
+</resources>
