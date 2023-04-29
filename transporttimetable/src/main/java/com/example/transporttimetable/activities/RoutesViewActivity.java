@@ -160,7 +160,6 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
             returnRouteButton.setVisibility(View.VISIBLE);
             returnRouteButton.setEnabled(true);
             busInfo = (Bus) adapterView.getItemAtPosition(position);
-            Log.e("Test","ID"+ busInfo.getId()+" Name:" + busInfo.getBusNumber());
             busId = busInfo.getId();
             new RoutesViewActivity.LoadRoutesInfoTask().execute();
         }

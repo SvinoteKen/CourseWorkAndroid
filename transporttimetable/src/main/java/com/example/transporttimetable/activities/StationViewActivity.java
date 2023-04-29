@@ -38,13 +38,12 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbHelper = new DbHelper();
-        // ниже, вместо ??????? вставляем Ваш ключ, присланный Вам из Яндекс:
         Parse.initialize(new Parse.Configuration.Builder(this)
                 .applicationId(getString(R.string.back4app_app_id))
                 .clientKey(getString(R.string.back4app_client_key))
                 .server(getString(R.string.back4app_server_url))
                 .build());
-        // Укажите имя своей Activity вместо mapview. У меня она называется map
+
         setContentView(R.layout.station_activity);
         gridView = findViewById(R.id.gridView);
         viewOnMap = findViewById(R.id.viewOnMapStation);
