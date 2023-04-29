@@ -14,9 +14,11 @@ import com.example.transporttimetable.models.Bus;
 import java.util.ArrayList;
 
 public class StationInfoAdapter extends BaseAdapter {
+
     private final ArrayList<Bus> buses;
     private final String stationName;
     private static LayoutInflater inflater = null;
+
     public StationInfoAdapter(Context context, ArrayList<Bus> buses, String stationName) {
         this.buses = buses;
         this.stationName = stationName;

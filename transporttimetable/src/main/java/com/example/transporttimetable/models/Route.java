@@ -22,7 +22,6 @@ public class Route {
         this.Reversed = Reversed;
     }
 
-    // Getters and setters
     public int getId() {
         return id;
     }

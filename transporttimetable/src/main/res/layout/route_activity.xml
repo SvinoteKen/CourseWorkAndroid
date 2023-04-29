@@ -67,7 +67,7 @@
                 android:backgroundTint="#468498"
                 android:text="@string/direct"
                 android:textColor="@color/white"
-                tools:ignore="TouchTargetSizeCheck" />
+                tools:ignore="TouchTargetSizeCheck,TextContrastCheck" />
 
             <Button
                 android:id="@+id/returnRouteButton"
@@ -119,7 +119,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="9dp"
                     android:backgroundTint="#FFFFFF"
-                    android:contentDescription="TODO"
+                    android:contentDescription="@string/bus"
                     android:minHeight="48dp"
                     app:srcCompat="@drawable/ic_baseline_directions_bus_menu_24"
                     tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck,DuplicateSpeakableTextCheck" />
@@ -129,7 +129,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/bus"
-                    android:textColor="#FFFFFF" />
+                    android:textColor="#FFFFFF"
+                    tools:ignore="TextContrastCheck" />
             </LinearLayout>
 
             <LinearLayout
@@ -145,17 +146,18 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     android:backgroundTint="#FFFFFF"
-                    android:contentDescription="TODO"
+                    android:contentDescription="@string/trolleybus"
                     android:minHeight="48dp"
                     app:srcCompat="@drawable/directions_trolleybus_menu_24"
-                    tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck" />
+                    tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck,DuplicateSpeakableTextCheck" />
 
                 <TextView
                     android:id="@+id/textView3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/trolleybus"
-                    android:textColor="#FFFFFF" />
+                    android:textColor="#FFFFFF"
+                    tools:ignore="TextContrastCheck" />
             </LinearLayout>
 
             <LinearLayout
@@ -171,17 +173,18 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:backgroundTint="#FFFFFF"
-                    android:contentDescription="TODO"
+                    android:contentDescription="@string/subway"
                     android:minHeight="48dp"
                     app:srcCompat="@drawable/ic_baseline_directions_subway_menu_24"
-                    tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck" />
+                    tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck,DuplicateSpeakableTextCheck" />
 
                 <TextView
                     android:id="@+id/textView4"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/subway"
-                    android:textColor="#FFFFFF" />
+                    android:textColor="#FFFFFF"
+                    tools:ignore="TextContrastCheck" />
             </LinearLayout>
         </LinearLayout>
     </FrameLayout>

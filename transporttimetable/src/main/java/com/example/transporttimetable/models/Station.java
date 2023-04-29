@@ -21,7 +21,6 @@ public class Station implements Serializable {
         this.coordinates = coordinates;
     }
 
-    // Getters and setters
     public int getId() {
         return id;
     }

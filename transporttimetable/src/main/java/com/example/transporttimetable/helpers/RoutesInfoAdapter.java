@@ -1,6 +1,5 @@
 package com.example.transporttimetable.helpers;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,16 +8,16 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.example.transporttimetable.R;
-import com.example.transporttimetable.models.Bus;
-import com.example.transporttimetable.models.Route;
 import com.example.transporttimetable.models.Station;
 
 import java.util.ArrayList;
 
 public class RoutesInfoAdapter extends BaseAdapter {
-    private Context context;
+
+    private final Context context;
     private final ArrayList<Station> stations;
     private static LayoutInflater inflater = null;
+
     public RoutesInfoAdapter(Context context, ArrayList<Station> stations) {
         this.context = context;
         this.stations = stations;

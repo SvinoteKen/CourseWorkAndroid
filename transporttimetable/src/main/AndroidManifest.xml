@@ -17,13 +17,7 @@
             android:label="Map"/>
         <activity android:name=".activities.RoutesViewActivity"
             android:label="Routs"/>
-        <activity android:name=".activities.ObjectsEditorActivity"
-            android:label="Objects">
-        </activity>
         <activity android:name=".activities.StationViewActivity"
-            android:label="@string/title_view">
-        </activity>
-        <activity android:name=".activities.ViewObjectOnMapActivity"
             android:label="@string/title_view">
         </activity>
 

@@ -26,7 +26,6 @@ public class Bus {
         this.transportType = transportType;
     }
 
-    // Getters and setters
     public int getId() {
         return id;
     }

@@ -58,7 +58,6 @@ public class BusAdapter extends ArrayAdapter<Bus> {
             holder = (BusAdapter.ViewHolder) convertView.getTag();
         }
         Bus bus = buses.get(position);
-        // Получаем id остановки
         int busId = bus.getId();
         ArrayList<Route> routes = db.getRoutsByBus(busId);
         holder.busNumber.setText(bus.getBusNumber());

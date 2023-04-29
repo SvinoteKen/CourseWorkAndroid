@@ -17,8 +17,6 @@ import com.example.transporttimetable.R;
 import com.example.transporttimetable.helpers.BusAdapter;
 import com.example.transporttimetable.helpers.DbHelper;
 import com.example.transporttimetable.helpers.RoutesInfoAdapter;
-import com.example.transporttimetable.helpers.StationAdapter;
-import com.example.transporttimetable.helpers.StationInfoAdapter;
 import com.example.transporttimetable.models.Bus;
 import com.example.transporttimetable.models.Station;
 import com.parse.Parse;
@@ -41,18 +39,18 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
     DbHelper dbHelper;
     int busId = 0;
     RoutesInfoAdapter routesInfoAdapter;
+
     @SuppressLint("MissingInflatedId")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbHelper = new DbHelper();
-        // ниже, вместо ??????? вставляем Ваш ключ, присланный Вам из Яндекс:
         Parse.initialize(new Parse.Configuration.Builder(this)
                 .applicationId(getString(R.string.back4app_app_id))
                 .clientKey(getString(R.string.back4app_client_key))
                 .server(getString(R.string.back4app_server_url))
                 .build());
-        // Укажите имя своей Activity вместо mapview. У меня она называется map
         setContentView(R.layout.route_activity);
+
         gridView = findViewById(R.id.gridView);
         viewOnMap = findViewById(R.id.viewOnMapStation);
         directRouteButton = findViewById(R.id.directRouteButton);
@@ -130,7 +128,6 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
                 new RoutesViewActivity.LoadRoutesInfoTask().execute();
             }
         });
-        // Выполняем запрос к базе данных в отдельном потоке
         if (!isDataLoaded) {
             new RoutesViewActivity.LoadRoutesTask().execute();
         }
@@ -148,10 +145,8 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
     public void onBackPressed() {
         isDataLoaded = false;
         Reversed = false;
-        // Здесь выполняем загрузку новых данных в фоновом потоке
         new LoadRoutesTask().execute();
         if(!isInfoLoaded){
-            // Вызываем стандартное поведение для кнопки "назад"
             super.onBackPressed();
         }
     }
@@ -199,7 +194,6 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
         @Override
         protected void onPostExecute(ArrayList<Bus> bus) {
             if (!isDataLoaded) {
-                // Обновляем пользовательский интерфейс в основном потоке
                 busAdapter = new BusAdapter(RoutesViewActivity.this, bus);
                 gridView.setAdapter(busAdapter);
                 isDataLoaded = true;
@@ -219,7 +213,6 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
         @Override
         protected void onPostExecute(ArrayList<Station> stations) {
             if (!isInfoLoaded) {
-                // Обновляем пользовательский интерфейс в основном потоке
                 routesInfoAdapter = new RoutesInfoAdapter(RoutesViewActivity.this, stations);
                 gridView.setAdapter(routesInfoAdapter);
                 isInfoLoaded = true;

@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,8 +19,6 @@ import com.example.transporttimetable.helpers.StationInfoAdapter;
 import com.example.transporttimetable.models.Bus;
 import com.example.transporttimetable.models.Station;
 import com.parse.Parse;
-import com.yandex.mapkit.MapKitFactory;
-import com.yandex.mapkit.geometry.Point;
 
 import java.util.ArrayList;
 
@@ -81,9 +78,8 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
             isDataLoaded =true;
             new LoadStationInfoTask().execute();
         } catch (NullPointerException e) {
-
+            Log.e("StationInfoLoad", e.getMessage());
         }
-        // Выполняем запрос к базе данных в отдельном потоке
         if (!isDataLoaded) {
             new LoadStationDataTask().execute();
         }
@@ -112,11 +108,9 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     @Override
     public void onBackPressed() {
         isDataLoaded = false;
-        // Здесь выполняем загрузку новых данных в фоновом потоке
         new LoadStationDataTask().execute();
         if(!isInfoLoaded){
-        // Вызываем стандартное поведение для кнопки "назад"
-        super.onBackPressed();
+            super.onBackPressed();
         }
     }
 
@@ -137,7 +131,6 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         @Override
         protected void onPostExecute(ArrayList<Station> stations) {
             if (!isDataLoaded) {
-                // Обновляем пользовательский интерфейс в основном потоке
                 stationAdapter = new StationAdapter(StationViewActivity.this, stations);
                 gridView.setAdapter(stationAdapter);
                 isDataLoaded = true;
@@ -157,7 +150,6 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         @Override
         protected void onPostExecute(ArrayList<Bus> buses) {
             if (!isInfoLoaded) {
-                // Обновляем пользовательский интерфейс в основном потоке
                 stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName);
                 gridView.setAdapter(stationInfoAdapter);
                 isInfoLoaded = true;

@@ -17,4 +17,9 @@
     <string name="subway">Трамвай</string>
     <string name="direct">Прямой</string>
     <string name="bus">Автобус</string>
+    <string name="main_title">Донецк Транспорт</string>
+    <string name="map">Карта</string>
+    <string name="exit">ВЫХОД</string>
+    <string name="textview">TextView</string>
+    <string name="n">n</string>
 </resources>

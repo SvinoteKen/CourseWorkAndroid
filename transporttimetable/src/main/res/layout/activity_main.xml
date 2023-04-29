@@ -27,7 +27,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="20dp"
-                android:text="Донецк Транспорт"
+                android:text="@string/main_title"
                 android:textColor="#FFFFFF"
                 android:textSize="24sp" />
         </FrameLayout>
@@ -50,7 +50,7 @@
                         android:layout_width="260dp"
                         android:layout_height="wrap_content"
                         android:backgroundTint="#4805A6"
-                        android:text="Карта" />
+                        android:text="@string/map" />
                 </TableRow>
 
                 <TableRow
@@ -62,7 +62,7 @@
                         android:layout_width="260dp"
                         android:layout_height="wrap_content"
                         android:backgroundTint="#4805A6"
-                        android:text="Маршруты" />
+                        android:text="@string/route" />
                 </TableRow>
 
                 <TableRow
@@ -70,11 +70,11 @@
                     android:layout_height="match_parent">
 
                     <Button
-                        android:id="@+id/button_poi"
+                        android:id="@+id/button_station"
                         android:layout_width="9dp"
                         android:layout_height="wrap_content"
                         android:backgroundTint="#4805A6"
-                        android:text="Остановки" />
+                        android:text="@string/station" />
                 </TableRow>
 
                 <TableRow
@@ -87,7 +87,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:backgroundTint="#4805A6"
-                        android:text="ВЫХОД" />
+                        android:text="@string/exit" />
                 </TableRow>
 
             </TableLayout>

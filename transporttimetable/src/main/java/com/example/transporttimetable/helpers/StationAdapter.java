@@ -12,10 +12,10 @@ import androidx.annotation.NonNull;
 import com.example.transporttimetable.R;
 import com.example.transporttimetable.models.Station;
 
-import java.text.BreakIterator;
 import java.util.ArrayList;
 
 public class StationAdapter extends ArrayAdapter<Station> {
+
     Context context;
     private final ArrayList<Station> stations;
     LayoutInflater inflater;
@@ -57,7 +57,7 @@ public class StationAdapter extends ArrayAdapter<Station> {
             holder = (ViewHolder) convertView.getTag();
         }
         Station station = stations.get(position);
-        // Получаем id остановки
+
         int stationId = station.getId();
 
         holder.stationName.setText(station.getName());
