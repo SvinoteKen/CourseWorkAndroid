@@ -33,6 +33,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     StationInfoAdapter stationInfoAdapter;
     DbHelper dbHelper;
     int stationId = 0;
+    int stationIdForTime = 0;
     String stationName = null;
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,13 +67,15 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         });
 
         stationAdapter = new StationAdapter(StationViewActivity.this,new ArrayList<>());
-        stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this,new ArrayList<>(),stationName);
+        stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this,new ArrayList<>(),stationName, stationId);
 
         gridView.setAdapter(stationAdapter);
         gridView.setOnItemClickListener(this);
         try
         {
-            stationId = (int) getIntent().getSerializableExtra("stationId");
+            stationIdForTime = (int) getIntent().getSerializableExtra("stationId");
+            int busId = (int) getIntent().getSerializableExtra("busId");
+            dbHelper.getTimeByRoute(busId ,stationIdForTime);
             stationName = (String) getIntent().getSerializableExtra("stationName");
             isDataLoaded =true;
             new LoadStationInfoTask().execute();
@@ -149,7 +152,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         @Override
         protected void onPostExecute(ArrayList<Bus> buses) {
             if (!isInfoLoaded) {
-                stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName);
+                stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName, stationIdForTime);
                 gridView.setAdapter(stationInfoAdapter);
                 isInfoLoaded = true;
                 isDataLoaded = true;

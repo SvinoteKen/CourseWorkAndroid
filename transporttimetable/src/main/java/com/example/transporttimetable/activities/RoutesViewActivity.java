@@ -30,6 +30,7 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
     boolean Reversed = false;
     GridView gridView;
     int transportType = 1;
+    int routeId = 0;
     Bus busInfo;
     Station station;
     Button viewOnMap;
@@ -167,6 +168,7 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
             station = (Station) adapterView.getItemAtPosition(position);
             Intent stationViewActivity = new Intent(RoutesViewActivity.this,StationViewActivity.class);
             stationViewActivity.putExtra("stationId",station.getId());
+            stationViewActivity.putExtra("busId",busId);
             stationViewActivity.putExtra("stationName",station.getName());
             startActivity(stationViewActivity);
         }

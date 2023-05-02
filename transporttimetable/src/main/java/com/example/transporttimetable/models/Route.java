@@ -12,14 +12,17 @@ public class Route {
 
     private Boolean Reversed;
 
+    private String Time;
+
     public Route() {
     }
 
-    public Route(int bus, int stop, String Name, Boolean Reversed) {
+    public Route(int bus, int stop, String Name, Boolean Reversed, String Time) {
         this.bus = bus;
         this.stop = stop;
         this.Name = Name;
         this.Reversed = Reversed;
+        this.Time = Time;
     }
 
     public int getId() {
@@ -60,5 +63,13 @@ public class Route {
 
     public void setReversed(Boolean reversed) {
         Reversed = reversed;
+    }
+
+    public String getTime() {
+        return Time;
+    }
+
+    public void setTime(String time) {
+        Time = time;
     }
 }

@@ -21,11 +21,11 @@ public class DbHelper{
 
     private static final List<String> keysToStations = Arrays.asList("ID", "Name", "Coordinates");
     private static final List<String> keysToBuses = Arrays.asList("ID", "NumberOfBus", "Interval", "FirsDeparture", "LastDeparture", "TransportType");
-    private static final List<String> keysToRoutes = Arrays.asList("ID", "ID_BUS", "ID_STATIONS", "Name", "Reversed");
+    private static final List<String> keysToRoutes = Arrays.asList("ID", "ID_BUS", "ID_STATIONS", "Name", "Reversed", "Time");
     private final ParseQuery<ParseObject> Buses;
     private final ParseQuery<ParseObject> Routes;
     private final ParseQuery<ParseObject> Stations;
-
+    public int idRouteForTime = 0; // Test
     public DbHelper(){
         Stations = ParseQuery.getQuery("Stations");
         Buses = ParseQuery.getQuery("Buses");
@@ -181,6 +181,40 @@ public class DbHelper{
         void onBusesLoaded(String buses);
     }
 
+    public int getTimeByRoute(int idBus, int idStation){ //Test method
+        ArrayList<Integer> Time = new ArrayList<>();
+        int x = 0;
+        try {
+            Routes.whereEqualTo("ID", 1).whereEqualTo("ID_BUS", idBus).whereEqualTo("Reversed", false);
+            List<ParseObject> routesResults = Routes.find();
+            List<Integer> stationIds = new ArrayList<>();
+
+            for (ParseObject route : routesResults) {
+                String idStations = route.getString("ID_STATIONS");
+                assert idStations != null;
+                String[] idArray = idStations.split(",");
+                for (String idStr : idArray) {
+                    stationIds.add(Integer.parseInt(idStr));
+                }
+
+                int id = stationIds.indexOf(idStation);
+                String time = route.getString("Time");
+                assert time != null;
+                String[] t = time.split(",");
+                for (String tStr : t) {
+                    Time.add(Integer.parseInt(tStr));
+                }
+                for (int i = 0;i<=id;i++){
+                    x += Time.get(i);
+                }
+                Log.e("TEST","Время: "+x);
+                return x;
+            }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        return x;
+    }
     public ArrayList<Route> getRoutsByBus(int busId) {
         ArrayList<Route> Route = new ArrayList<>();
         Routes.whereEqualTo("ID_BUS", busId).whereEqualTo("Reversed", false);
@@ -217,7 +251,9 @@ public class DbHelper{
 
             List<Integer> stationIds = new ArrayList<>();
             for (ParseObject route : routesResults) {
+
                 String idStations = route.getString("ID_STATIONS");
+                idRouteForTime = route.getInt("ID"); // Test
                 assert idStations != null;
                 String[] idArray = idStations.split(",");
                 for (String idStr : idArray) {
