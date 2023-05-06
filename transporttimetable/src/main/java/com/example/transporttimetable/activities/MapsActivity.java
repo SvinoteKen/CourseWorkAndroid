@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
@@ -19,37 +20,51 @@ import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
 import com.yandex.mapkit.RequestPointType;
-import com.yandex.mapkit.directions.DirectionsFactory;
-import com.yandex.mapkit.directions.driving.DrivingOptions;
-import com.yandex.mapkit.directions.driving.DrivingRoute;
-import com.yandex.mapkit.directions.driving.DrivingRouter;
-import com.yandex.mapkit.directions.driving.DrivingSession;
-import com.yandex.mapkit.directions.driving.VehicleOptions;
-import com.yandex.mapkit.directions.driving.VehicleType;
 import com.yandex.mapkit.geometry.Circle;
 import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.geometry.Polyline;
+import com.yandex.mapkit.geometry.SubpolylineHelper;
 import com.yandex.mapkit.map.CameraPosition;
 import com.yandex.mapkit.map.CircleMapObject;
 import com.yandex.mapkit.map.MapObject;
 import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.MapObjectTapListener;
+import com.yandex.mapkit.map.PolylineMapObject;
 import com.yandex.mapkit.mapview.MapView;
 import com.yandex.mapkit.traffic.TrafficLayer;
+import com.yandex.mapkit.transport.TransportFactory;
+import com.yandex.mapkit.transport.masstransit.FilterVehicleTypes;
+import com.yandex.mapkit.transport.masstransit.MasstransitRouter;
+import com.yandex.mapkit.transport.masstransit.Route;
+import com.yandex.mapkit.transport.masstransit.Section;
+import com.yandex.mapkit.transport.masstransit.SectionMetadata;
+import com.yandex.mapkit.transport.masstransit.Session;
+import com.yandex.mapkit.transport.masstransit.TimeOptions;
+import com.yandex.mapkit.transport.masstransit.TransitOptions;
+import com.yandex.mapkit.transport.masstransit.Transport;
 import com.yandex.mapkit.user_location.UserLocationLayer;
 import com.yandex.runtime.Error;
+import com.yandex.runtime.network.NetworkError;
+import com.yandex.runtime.network.RemoteError;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-public class MapsActivity extends AppCompatActivity implements DrivingSession.DrivingRouteListener {
+public class MapsActivity extends AppCompatActivity implements Session.RouteListener {
     private MapObjectCollection mapObjects;
 
     public MapView mapview;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     public Switch traffic;
-    private DrivingRouter drivingRouter = null;
-    private DrivingSession drivingSession = null;
+    private MasstransitRouter drivingRouter;
+    private Session drivingSession = null;
+    private Session drivingSession2 = null;
+    private static final int DELAY_MILLIS = 5000; // 5 seconds delay
+    private final Point TARGET_LOCATION = new Point(48.010591, 37.838702);
+
     Station station = new Station();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,9 +100,14 @@ public class MapsActivity extends AppCompatActivity implements DrivingSession.Dr
                 }
             }
         });
-        drivingRouter = DirectionsFactory.getInstance().createDrivingRouter();
+        drivingRouter = TransportFactory.getInstance().createMasstransitRouter();
         mapObjects = mapview.getMap().getMapObjects().addCollection();
-        drawOnMap();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                drawOnMap();
+            }
+        }, DELAY_MILLIS);
     }
 
     private void setMapZoom(Point point, float zoom){
@@ -98,6 +118,8 @@ public class MapsActivity extends AppCompatActivity implements DrivingSession.Dr
     }
 
     private void drawOnMap(){
+        ArrayList<RequestPoint> points = new ArrayList<>();
+        TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
         try
         {
             Point point = new Point((double) getIntent().getSerializableExtra("stationLatitude"),
@@ -111,35 +133,44 @@ public class MapsActivity extends AppCompatActivity implements DrivingSession.Dr
             createTappableCircle(stations);
 
         } catch (NullPointerException e) {
-            Log.e("createRoute", e.getMessage());
+            Log.e("createRoute1", e.getMessage());
         }
         try
         {
-            setMapZoom(new Point(48.010591, 37.838702),11.0f);
+            setMapZoom(TARGET_LOCATION,11.0f);
             int busId = (int) getIntent().getSerializableExtra("busId");
             boolean Reversed = (boolean) getIntent().getSerializableExtra("Reversed");
             DbHelper dbHelper = new DbHelper();
             ArrayList<Station> Stations = dbHelper.getRoutByBus(busId, Reversed);
+            Collections.sort(Stations, Station.getIndexComparator());
             createTappableCircle(Stations);
             Station firstElement = Stations.get(0);
             Station lastElement = Stations.get(Stations.size() - 1);
-            ArrayList<RequestPoint> points = new ArrayList<>();
             points.add(new RequestPoint(new Point(firstElement.getCoordinates().getLatitude(),
                     firstElement.getCoordinates().getLongitude()),RequestPointType.WAYPOINT, ""));
-            for (Station station : Stations) {
+            for (int i = 1; i < Stations.size() - 1; i++) {
+                Station station = Stations.get(i);
                 points.add(new RequestPoint(new Point(station.getCoordinates().getLatitude(),
                         station.getCoordinates().getLongitude()),RequestPointType.VIAPOINT, ""));
             }
             points.add(new RequestPoint(new Point(lastElement.getCoordinates().getLatitude(),
                     lastElement.getCoordinates().getLongitude()), RequestPointType.WAYPOINT, ""));
-            DrivingOptions options = new DrivingOptions();
-            options.setRoutesCount(1);
-            VehicleOptions v = new VehicleOptions();
-            v.setVehicleType(VehicleType.TRUCK);
-            drivingSession = drivingRouter.requestRoutes(points,options,v, this);
+            ArrayList<RequestPoint> points1 = new ArrayList<>(points.subList(0, 19));
+            ArrayList<RequestPoint> points2 = new ArrayList<>();
+            RequestPoint lastPoint = points1.remove(18);
+            points1.add(new RequestPoint(lastPoint.getPoint(), RequestPointType.WAYPOINT, ""));
+
+            RequestPoint firstPoint = points.get(18);
+            points2.add(new RequestPoint(firstPoint.getPoint(), RequestPointType.WAYPOINT, ""));
+            points2.addAll(points.subList(17, points.size()));
+
+            RequestPoint lastPoint2 = points.remove(points.size() - 1);
+            points2.add(new RequestPoint(lastPoint2.getPoint(), RequestPointType.WAYPOINT, ""));
+            drivingSession = drivingRouter.requestRoutes(points1,transitOptions,this);
+            drivingSession2 = drivingRouter.requestRoutes(points2,transitOptions,this);
 
         } catch (NullPointerException e) {
-            Log.e("createRoute", e.getMessage());
+            Log.e("createRoute2", e.getMessage());
         }
     }
 
@@ -189,14 +220,69 @@ public class MapsActivity extends AppCompatActivity implements DrivingSession.Dr
         MapKitFactory.getInstance().onStart();
         mapview.onStart();
     }
+
     @Override
-    public void onDrivingRoutes(@NonNull List<DrivingRoute> list) {
-        for (DrivingRoute route: list) {
-            mapObjects.addPolyline(route.getGeometry());
+    public void onMasstransitRoutes(List<Route> routes) {
+        if (routes.size() > 0) {
+            for (Section section : routes.get(0).getSections()) {
+                drawSection(
+                        section.getMetadata().getData(),
+                        SubpolylineHelper.subpolyline(
+                                routes.get(0).getGeometry(), section.getGeometry()));
+            }
         }
     }
+
     @Override
-    public void onDrivingRoutesError(@NonNull Error error) {
-        Log.e("DrivingRoute",error.toString());
+    public void onMasstransitRoutesError(@NonNull Error error) {
+        String errorMessage = getString(R.string.unknown_error_message);
+        if (error instanceof RemoteError) {
+            errorMessage = getString(R.string.remote_error_message);
+        } else if (error instanceof NetworkError) {
+            errorMessage = getString(R.string.network_error_message);
+        }
+
+        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+        Log.e("MasstransitRoute",error.toString());
+    }
+
+    private void drawSection(SectionMetadata.SectionData data,
+                             Polyline geometry) {
+        PolylineMapObject polylineMapObject = mapObjects.addPolyline(geometry);
+        if (data.getTransports() != null) {
+            for (Transport transport : data.getTransports()) {
+                if (transport.getLine().getStyle() != null) {
+                    polylineMapObject.setStrokeColor(
+                            transport.getLine().getStyle().getColor() | 0xFF000000
+                    );
+                    return;
+                }
+            }
+            HashSet<String> knownVehicleTypes = new HashSet<>();
+            knownVehicleTypes.add("bus");
+            knownVehicleTypes.add("tramway");
+            for (Transport transport : data.getTransports()) {
+                String sectionVehicleType = getVehicleType(transport, knownVehicleTypes);
+                if (sectionVehicleType.equals("bus")) {
+                    polylineMapObject.setStrokeColor(0xFF00FF00);  // Green
+                    return;
+                } else if (sectionVehicleType.equals("tramway")) {
+                    polylineMapObject.setStrokeColor(0xFFFF0000);  // Red
+                    return;
+                }
+            }
+            polylineMapObject.setStrokeColor(0xFF000000);  // Black
+        } else {
+            polylineMapObject.setStrokeColor(0xFF0000FF);  // Blue
+        }
+    }
+
+    private String getVehicleType(Transport transport, HashSet<String> knownVehicleTypes) {
+        for (String type : transport.getLine().getVehicleTypes()) {
+            if (knownVehicleTypes.contains(type)) {
+                return type;
+            }
+        }
+        return null;
     }
 }

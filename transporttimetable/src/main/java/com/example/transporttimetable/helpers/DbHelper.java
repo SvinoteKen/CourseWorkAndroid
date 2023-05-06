@@ -25,7 +25,6 @@ public class DbHelper{
     private final ParseQuery<ParseObject> Buses;
     private final ParseQuery<ParseObject> Routes;
     private final ParseQuery<ParseObject> Stations;
-    public int idRouteForTime = 0; // Test
     public DbHelper(){
         Stations = ParseQuery.getQuery("Stations");
         Buses = ParseQuery.getQuery("Buses");
@@ -253,14 +252,13 @@ public class DbHelper{
             for (ParseObject route : routesResults) {
 
                 String idStations = route.getString("ID_STATIONS");
-                idRouteForTime = route.getInt("ID"); // Test
                 assert idStations != null;
                 String[] idArray = idStations.split(",");
-                for (String idStr : idArray) {
-                    stationIds.add(Integer.parseInt(idStr));
+                for (int i = 0; i < idArray.length; i++) {
+                    int id = Integer.parseInt(idArray[i]);
+                    stationIds.add(id);
                 }
             }
-
             Stations.selectKeys(keysToStations);
             Stations.whereContainedIn("ID", stationIds);
 
@@ -276,6 +274,8 @@ public class DbHelper{
                 s.setName(name);
                 s.setId(id);
                 s.setCoordinates(point);
+                int index = stationIds.indexOf(id);
+                s.setIndex(index);
                 Station.add(s);
             }
             return Station;

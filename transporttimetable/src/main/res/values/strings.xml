@@ -22,4 +22,9 @@
     <string name="exit">ВЫХОД</string>
     <string name="textview">TextView</string>
     <string name="n">n</string>
+
+    <string name="not_found_error_message">Not found</string>
+    <string name="network_error_message">Network error</string>
+    <string name="remote_error_message">Remote server error</string>
+    <string name="unknown_error_message">Unknown error</string>
 </resources>

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -22,6 +21,7 @@ import com.example.transporttimetable.models.Station;
 import com.parse.Parse;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class RoutesViewActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
@@ -208,7 +208,9 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
 
         @Override
         protected ArrayList<Station> doInBackground(Void... voids) {
-            return dbHelper.getRoutByBus(busId, Reversed);
+            ArrayList<Station> stations = dbHelper.getRoutByBus(busId, Reversed);
+            Collections.sort(stations, Station.getIndexComparator());
+            return stations;
         }
 
         @Override

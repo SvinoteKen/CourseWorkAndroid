@@ -20,10 +20,6 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.time.Duration;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-
 public class MainActivity extends Activity {
 
     private static final int REQUEST_PERMISSION_PHONE_STATE = 1;
