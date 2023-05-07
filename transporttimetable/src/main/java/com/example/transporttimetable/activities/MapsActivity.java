@@ -155,6 +155,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
             }
             points.add(new RequestPoint(new Point(lastElement.getCoordinates().getLatitude(),
                     lastElement.getCoordinates().getLongitude()), RequestPointType.WAYPOINT, ""));
+            if(points.size()>19){
             ArrayList<RequestPoint> points1 = new ArrayList<>(points.subList(0, 19));
             ArrayList<RequestPoint> points2 = new ArrayList<>();
             RequestPoint lastPoint = points1.remove(18);
@@ -167,7 +168,10 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
             RequestPoint lastPoint2 = points.remove(points.size() - 1);
             points2.add(new RequestPoint(lastPoint2.getPoint(), RequestPointType.WAYPOINT, ""));
             drivingSession = drivingRouter.requestRoutes(points1,transitOptions,this);
-            drivingSession2 = drivingRouter.requestRoutes(points2,transitOptions,this);
+            drivingSession2 = drivingRouter.requestRoutes(points2,transitOptions,this);}
+            else {
+                drivingSession = drivingRouter.requestRoutes(points,transitOptions,this);
+            }
 
         } catch (NullPointerException e) {
             Log.e("createRoute2", e.getMessage());

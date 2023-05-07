@@ -7,8 +7,8 @@
     <string name="back4app_server_url">https://parseapi.back4app.com/</string>
 
     <!-- Paste BOTH strings as required -->
-    <string name="back4app_app_id">cLG0TvsiJn5VtZYVNUyMKBVD3JtJtrIH1HUtzDmu</string>
-    <string name="back4app_client_key">jDJCGas7B5yUBM7DvoEqVCOCLTGoxMd27mxarKLK</string>
+    <string name="back4app_app_id">KbkDBhHTaUZUb6GELN3rIbt6SqrI6bmcDiv9ctU8</string>
+    <string name="back4app_client_key">GF2mAlRIIRZBgZTYoV6qWTfY0xNtNWMEB59SS3qc</string>
     <string name="viewOnMap">Показать на карте</string>
     <string name="station">Остановки</string>
     <string name="trolleybus">Троллейбус</string>
