@@ -4,6 +4,7 @@ import com.yandex.mapkit.geometry.Point;
 
 import java.io.Serializable;
 import java.util.Comparator;
+import java.util.Map;
 
 public class Station implements Serializable {
 
@@ -34,12 +35,7 @@ public class Station implements Serializable {
     }
 
     public static Comparator<Station> getIndexComparator() {
-        return new Comparator<Station>() {
-            @Override
-            public int compare(Station s1, Station s2) {
-                return Integer.compare(s1.getIndex(), s2.getIndex());
-            }
-        };
+        return Comparator.comparingInt(Station::getIndex);
     }
     public int getId() {
         return id;

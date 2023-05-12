@@ -49,12 +49,40 @@
 
     <FrameLayout
         android:layout_width="match_parent"
+        android:layout_height="49dp">
+
+        <EditText
+            android:id="@+id/search"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="5dp"
+            android:autofillHints="Поиск"
+            android:background="@drawable/search"
+            android:gravity="start"
+            android:hint="@string/search"
+            android:iconifiedByDefault="false"
+            android:imeOptions="actionSend"
+            android:inputType="text"
+            android:paddingStart="12dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="12dp"
+            android:textColor="#000000"
+            android:textColorHint="#9FAAB5"
+            tools:ignore="TouchTargetSizeCheck,TextContrastCheck" />
+    </FrameLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <GridView
             android:id="@+id/gridView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="592dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="5dp"
             android:focusableInTouchMode="false"
             android:footerDividersEnabled="false"
             android:numColumns="1" />

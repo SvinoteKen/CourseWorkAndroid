@@ -10,9 +10,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.example.transporttimetable.R;
+import com.example.transporttimetable.models.Route;
 import com.example.transporttimetable.models.Station;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class StationAdapter extends ArrayAdapter<Station> {
 
@@ -20,11 +23,12 @@ public class StationAdapter extends ArrayAdapter<Station> {
     private final ArrayList<Station> stations;
     LayoutInflater inflater;
     DbHelper db = new DbHelper();
-
-    public StationAdapter(@NonNull Context context, ArrayList<Station> stations) {
+    private final Map<Integer, List<String>> busRoutes;
+    public StationAdapter(@NonNull Context context, ArrayList<Station> stations, Map<Integer, List<String>> busRoutes) {
         super(context,0,stations);
         this.context = context;
         this.stations = stations;
+        this.busRoutes = busRoutes;
         inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -57,12 +61,23 @@ public class StationAdapter extends ArrayAdapter<Station> {
             holder = (ViewHolder) convertView.getTag();
         }
         Station station = stations.get(position);
-
-        int stationId = station.getId();
-
         holder.stationName.setText(station.getName());
+        int stationId = station.getId();
+        List<String> busesIds = busRoutes.get(stationId);
+        if (busesIds != null) {
+            StringBuilder busNumbers = new StringBuilder();
+            for (String busesId : busesIds) {
+                    busNumbers.append(busesId).append(", ");
+            }
+            if (busNumbers.length() > 0) {
+                // Удаляем последнюю запятую и пробел
+                busNumbers.setLength(busNumbers.length() - 2);
+            }
+            holder.busNumber.setText(busNumbers);
+        } else {
+            holder.busNumber.setText("");
+        }
 
-        db.getBusesByStation(stationId, buses -> holder.busNumber.setText(buses));
         return convertView;
     }
 
@@ -70,4 +85,5 @@ public class StationAdapter extends ArrayAdapter<Station> {
         TextView stationName;
         TextView busNumber;
     }
+
 }

@@ -61,7 +61,6 @@ public class StationInfoAdapter extends BaseAdapter {
         TextView lastDepartureTextView = convertView.findViewById(R.id.lastDepartureTextView);
 
         Bus bus = buses.get(position);
-        Log.e("Time", "айди автобуса: "+ bus.getId()+" станции: "+stationId);
         int timeStation = dbHelper.getTimeByRoute(bus.getId() ,stationId);
         stationNameTextView.setText(stationName);
         String transport = "";

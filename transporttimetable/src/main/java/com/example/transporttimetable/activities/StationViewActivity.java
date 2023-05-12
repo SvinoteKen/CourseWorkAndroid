@@ -5,9 +5,11 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +23,9 @@ import com.example.transporttimetable.models.Station;
 import com.parse.Parse;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class StationViewActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
@@ -29,13 +34,15 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     GridView gridView;
     Button viewOnMap;
     Station station;
-    StationAdapter stationAdapter;
+    String stationName = null;
+            StationAdapter stationAdapter;
     StationInfoAdapter stationInfoAdapter;
     DbHelper dbHelper;
     int stationId = 0;
     int stationIdForTime = 0;
-    String stationName = null;
-
+    String searchStation = null;
+    EditText searchText;
+    ArrayList<Station> stations = null;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbHelper = new DbHelper();
@@ -44,11 +51,26 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
                 .clientKey(getString(R.string.back4app_client_key))
                 .server(getString(R.string.back4app_server_url))
                 .build());
-
         setContentView(R.layout.station_activity);
         gridView = findViewById(R.id.gridView);
         viewOnMap = findViewById(R.id.viewOnMapStation);
-
+        searchText = findViewById(R.id.search);
+        searchText.setOnKeyListener(new View.OnKeyListener()
+            {
+                 public boolean onKey(View v, int keyCode, KeyEvent event)
+                 {
+                     if(event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER && searchText.getText()!=null)
+                     {
+                         searchStation = searchText.getText().toString();
+                         isDataLoaded = false;
+                         if (!isDataLoaded) {
+                             new LoadStationDataTask().execute();
+                         }
+                     }
+                     return false;
+                 }
+            }
+        );
         viewOnMap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -66,7 +88,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
             }
         });
 
-        stationAdapter = new StationAdapter(StationViewActivity.this,new ArrayList<>());
+        stationAdapter = new StationAdapter(StationViewActivity.this,new ArrayList<>(),new HashMap<>());
         stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this,new ArrayList<>(),stationName, stationId);
 
         gridView.setAdapter(stationAdapter);
@@ -81,9 +103,6 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
             new LoadStationInfoTask().execute();
         } catch (NullPointerException e) {
             Log.e("StationInfoLoad", e.getMessage());
-        }
-        if (!isDataLoaded) {
-            new LoadStationDataTask().execute();
         }
     }
 
@@ -101,7 +120,6 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
             viewOnMap.setVisibility(View.VISIBLE);
             viewOnMap.setEnabled(true);
             station = (Station) adapterView.getItemAtPosition(position);
-            Log.e("Test","ID"+ station.getId()+" Name:" + station.getName());
             stationId = station.getId();
             stationName = station.getName();
             new LoadStationInfoTask().execute();
@@ -117,7 +135,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class LoadStationDataTask extends AsyncTask<Void, Void, ArrayList<Station>> {
+    private class LoadStationDataTask extends AsyncTask<Void, Void, Map<Integer, List<String>>> {
 
         @Override
         protected void onPreExecute() {
@@ -126,14 +144,23 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         }
 
         @Override
-        protected ArrayList<Station> doInBackground(Void... voids) {
-            return dbHelper.getAllStations();
+        protected Map<Integer, List<String>> doInBackground(Void... voids) {
+            Map<Integer, List<String>> busRoutes = new HashMap<>();
+            stations = dbHelper.getAllStations(searchStation);
+
+            for (Station station : stations) {
+                int stationId = station.getId();
+                List<String> buses = dbHelper.getBusesByStation(stationId);
+                busRoutes.put(stationId, buses);
+            }
+
+            return busRoutes;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<Station> stations) {
+        protected void onPostExecute(Map<Integer, List<String>> busRoutes) {
             if (!isDataLoaded) {
-                stationAdapter = new StationAdapter(StationViewActivity.this, stations);
+                stationAdapter = new StationAdapter(StationViewActivity.this, stations, busRoutes);
                 gridView.setAdapter(stationAdapter);
                 isDataLoaded = true;
                 isInfoLoaded = false;

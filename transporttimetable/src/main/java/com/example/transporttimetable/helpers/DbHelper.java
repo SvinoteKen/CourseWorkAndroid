@@ -1,7 +1,4 @@
 package com.example.transporttimetable.helpers;
-
-import android.annotation.SuppressLint;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.example.transporttimetable.models.Bus;
@@ -15,7 +12,9 @@ import com.yandex.mapkit.geometry.Point;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 public class DbHelper{
 
@@ -31,30 +30,36 @@ public class DbHelper{
         Routes = ParseQuery.getQuery("Routes");
 
     }
-    public ArrayList<Station> getAllStations() {
-        ArrayList<Station> Station = new ArrayList<>();
-        Stations.selectKeys(keysToStations);
-        try {
 
-            List<ParseObject> results = Stations.find();
+    public ArrayList<Station> getAllStations(String stationName) {
+        HashSet<Station> uniqueStations = new HashSet<>();
+        ArrayList<Station> stations = new ArrayList<>();
+        if(stationName !=null){
+            Stations.selectKeys(keysToStations);
+            try {
+                Stations.whereMatches("Name", "(?i)" + stationName);
+                List<ParseObject> results = Stations.find();
 
-            for (ParseObject station : results) {
-                Station s = new Station();
-                int id = station.getInt("ID");
-                String name = station.getString("Name");
-                ParseGeoPoint coordinates = station.getParseGeoPoint("Coordinates");
-                assert coordinates != null;
-                Point point = new Point(coordinates.getLatitude(), coordinates.getLongitude());
-                s.setName(name);
-                s.setId(id);
-                s.setCoordinates(point);
-                Station.add(s);
+                for (ParseObject station : results) {
+                    Station s = new Station();
+                    int id = station.getInt("ID");
+                    String name = station.getString("Name");
+                    ParseGeoPoint coordinates = station.getParseGeoPoint("Coordinates");
+                    assert coordinates != null;
+                    Point point = new Point(coordinates.getLatitude(), coordinates.getLongitude());
+                    s.setName(name);
+                    s.setId(id);
+                    s.setCoordinates(point);
+                    Log.e("DBTEST", name);
+                    uniqueStations.add(s);
+                }
+                stations = new ArrayList<>(uniqueStations);
+                return stations;
+            } catch (ParseException e) {
+                Log.e("DbHelper", "Error retrieving data: " + e.getMessage());
             }
-            return Station;
-        } catch (ParseException e) {
-            Log.e("DbHelper", "Error retrieving data: " + e.getMessage());
         }
-        return Station;
+        return stations;
     }
     public ArrayList<Bus> getAllBuses(int type) {
         ArrayList<Bus> Bus = new ArrayList<>();
@@ -89,12 +94,10 @@ public class DbHelper{
 
     public ArrayList<Bus> getBusByStation(int stationId){
         ArrayList<Bus> Bus = new ArrayList<>();
-        String stationIdStr = String.valueOf(stationId);
+        String stationIdStr = ","+String.valueOf(stationId)+",";
         try {
             Routes.whereContains("ID_STATIONS", stationIdStr).whereEqualTo("Reversed", false);
-
             List<ParseObject> routesResults = Routes.find();
-
             List<Integer> busIds = new ArrayList<>();
 
             for (ParseObject route : routesResults) {
@@ -128,58 +131,34 @@ public class DbHelper{
         return Bus;
     }
 
-    @SuppressLint("StaticFieldLeak")
-    public void getBusesByStation(int stationId, OnBusesLoadedListener listener) {
-        new AsyncTask<Integer, Void, String>() {
+    public List<String> getBusesByStation(int stationId) {
+        String stationIdStr = "," + String.valueOf(stationId) + ",";
+        List<String> busNumbers = new ArrayList<>();
+        try {
+            Routes.whereContains("ID_STATIONS", stationIdStr).whereEqualTo("Reversed", false);
+            List<ParseObject> routesResults = Routes.find();
 
-            @Override
-            protected String doInBackground(Integer... params) {
-                int stationId = params[0];
-                String stationIdStr = String.valueOf(stationId);
-                StringBuilder busesString = new StringBuilder();
-                try {
-                    Routes.whereContains("ID_STATIONS", stationIdStr).whereEqualTo("Reversed", false);
+            List<Integer> busIds = new ArrayList<>();
 
-                    List<ParseObject> routesResults = Routes.find();
-
-                    List<Integer> busIds = new ArrayList<>();
-
-                    for (ParseObject route : routesResults) {
-                        int busId = route.getInt("ID_BUS");
-                        busIds.add(busId);
-                    }
-
-                    Buses.whereContainedIn("ID", busIds);
-
-                    List<ParseObject> busesResults = Buses.find();
-
-                    for (ParseObject bus : busesResults) {
-                        String numberOfBus = bus.getString("NumberOfBus");
-                        busesString.append(numberOfBus);
-                        busesString.append(", ");
-                    }
-
-                    if (busesString.length() > 0) {
-                        busesString.setLength(busesString.length() - 2);
-                    }
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-
-                return String.valueOf(busesString);
+            for (ParseObject route : routesResults) {
+                int busId = route.getInt("ID_BUS");
+                busIds.add(busId);
             }
 
-            @Override
-            protected void onPostExecute(String result) {
-                listener.onBusesLoaded(result);
+            Buses.whereContainedIn("ID", busIds);
+
+            List<ParseObject> busesResults = Buses.find();
+
+            for (ParseObject bus : busesResults) {
+                String numberOfBus = bus.getString("NumberOfBus");
+                busNumbers.add(numberOfBus);
             }
-        }.execute(stationId);
+            return busNumbers;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return busNumbers;
     }
-
-    public interface OnBusesLoadedListener {
-        void onBusesLoaded(String buses);
-    }
-
     public int getTimeByRoute(int idBus, int idStation){ //Test method
         ArrayList<Integer> Time = new ArrayList<>();
         int x = 0;
@@ -192,8 +171,9 @@ public class DbHelper{
                 String idStations = route.getString("ID_STATIONS");
                 assert idStations != null;
                 String[] idArray = idStations.split(",");
-                for (String idStr : idArray) {
-                    stationIds.add(Integer.parseInt(idStr));
+                for (int i = 1; i < idArray.length; i++) {
+                    int id = Integer.parseInt(idArray[i]);
+                    stationIds.add(id);
                 }
 
                 int id = stationIds.indexOf(idStation);
@@ -206,7 +186,6 @@ public class DbHelper{
                 for (int i = 0;i<=id;i++){
                     x += Time.get(i);
                 }
-                Log.e("TEST","Время: "+x);
                 return x;
             }
             } catch (ParseException e) {
@@ -254,7 +233,7 @@ public class DbHelper{
                 String idStations = route.getString("ID_STATIONS");
                 assert idStations != null;
                 String[] idArray = idStations.split(",");
-                for (int i = 0; i < idArray.length; i++) {
+                for (int i = 1; i < idArray.length; i++) {
                     int id = Integer.parseInt(idArray[i]);
                     stationIds.add(id);
                 }
