@@ -4,7 +4,6 @@ import com.yandex.mapkit.geometry.Point;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.Map;
 
 public class Station implements Serializable {
 
@@ -16,14 +15,25 @@ public class Station implements Serializable {
 
     private int index;
 
+    private boolean reversed;
+
+    public boolean isReversed() {
+        return reversed;
+    }
+
+    public void setReversed(boolean reversed) {
+        this.reversed = reversed;
+    }
+
     public Station() {
     }
 
-    public Station(int id, String name, Point coordinates, int index) {
+    public Station(int id, String name, Point coordinates, int index,boolean reversed) {
         this.id = id;
         this.name = name;
         this.coordinates = coordinates;
         this.index = index;
+        this.reversed = reversed;
     }
 
     public int getIndex() {

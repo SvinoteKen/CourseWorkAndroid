@@ -24,7 +24,6 @@ import com.parse.Parse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class StationViewActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -35,6 +34,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     Button viewOnMap;
     Station station;
     String stationName = null;
+    Boolean stationReversed = false;
             StationAdapter stationAdapter;
     StationInfoAdapter stationInfoAdapter;
     DbHelper dbHelper;
@@ -96,9 +96,8 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         try
         {
             stationIdForTime = (int) getIntent().getSerializableExtra("stationId");
-            int busId = (int) getIntent().getSerializableExtra("busId");
-            dbHelper.getTimeByRoute(busId ,stationIdForTime);
             stationName = (String) getIntent().getSerializableExtra("stationName");
+            stationReversed = (Boolean) getIntent().getSerializableExtra("stationReversed");
             isDataLoaded =true;
             new LoadStationInfoTask().execute();
         } catch (NullPointerException e) {
@@ -122,6 +121,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
             station = (Station) adapterView.getItemAtPosition(position);
             stationId = station.getId();
             stationName = station.getName();
+            stationReversed = station.isReversed();
             new LoadStationInfoTask().execute();
         }
     }
@@ -135,7 +135,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class LoadStationDataTask extends AsyncTask<Void, Void, Map<Integer, List<String>>> {
+    private class LoadStationDataTask extends AsyncTask<Void, Void, Map<Integer, String>> {
 
         @Override
         protected void onPreExecute() {
@@ -144,13 +144,23 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         }
 
         @Override
-        protected Map<Integer, List<String>> doInBackground(Void... voids) {
-            Map<Integer, List<String>> busRoutes = new HashMap<>();
+        protected Map<Integer, String> doInBackground(Void... voids) {
+            Map<Integer, String> busRoutes = new HashMap<>();
+            String buses;
             stations = dbHelper.getAllStations(searchStation);
-
+            ArrayList<String> wordsList = new ArrayList<>();
             for (Station station : stations) {
                 int stationId = station.getId();
-                List<String> buses = dbHelper.getBusesByStation(stationId);
+                if (wordsList.contains(station.getName()))
+                {
+                    buses = dbHelper.getBusesByStation(stationId,true);
+                    station.setReversed(true);
+                }
+                else{
+                buses = dbHelper.getBusesByStation(stationId,false);
+                    station.setReversed(false);
+                }
+                wordsList.add(station.getName());
                 busRoutes.put(stationId, buses);
             }
 
@@ -158,7 +168,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         }
 
         @Override
-        protected void onPostExecute(Map<Integer, List<String>> busRoutes) {
+        protected void onPostExecute(Map<Integer, String> busRoutes) {
             if (!isDataLoaded) {
                 stationAdapter = new StationAdapter(StationViewActivity.this, stations, busRoutes);
                 gridView.setAdapter(stationAdapter);
@@ -173,7 +183,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
 
         @Override
         protected ArrayList<Bus> doInBackground(Void... voids) {
-            return dbHelper.getBusByStation(stationId);
+            return dbHelper.getBusByStation(stationIdForTime,stationReversed);
         }
 
         @Override

@@ -5,16 +5,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
 import com.example.transporttimetable.R;
-import com.example.transporttimetable.models.Route;
 import com.example.transporttimetable.models.Station;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class StationAdapter extends ArrayAdapter<Station> {
@@ -23,8 +22,8 @@ public class StationAdapter extends ArrayAdapter<Station> {
     private final ArrayList<Station> stations;
     LayoutInflater inflater;
     DbHelper db = new DbHelper();
-    private final Map<Integer, List<String>> busRoutes;
-    public StationAdapter(@NonNull Context context, ArrayList<Station> stations, Map<Integer, List<String>> busRoutes) {
+    private final Map<Integer, String> busRoutes;
+    public StationAdapter(@NonNull Context context, ArrayList<Station> stations, Map<Integer, String> busRoutes) {
         super(context,0,stations);
         this.context = context;
         this.stations = stations;
@@ -56,6 +55,7 @@ public class StationAdapter extends ArrayAdapter<Station> {
             holder = new ViewHolder();
             holder.stationName = convertView.findViewById(R.id.station);
             holder.busNumber = convertView.findViewById(R.id.nBus);
+            holder.imageView = convertView.findViewById(R.id.imageView);
             convertView.setTag(holder);
         }else {
             holder = (ViewHolder) convertView.getTag();
@@ -63,27 +63,21 @@ public class StationAdapter extends ArrayAdapter<Station> {
         Station station = stations.get(position);
         holder.stationName.setText(station.getName());
         int stationId = station.getId();
-        List<String> busesIds = busRoutes.get(stationId);
-        if (busesIds != null) {
-            StringBuilder busNumbers = new StringBuilder();
-            for (String busesId : busesIds) {
-                    busNumbers.append(busesId).append(", ");
-            }
-            if (busNumbers.length() > 0) {
-                // Удаляем последнюю запятую и пробел
-                busNumbers.setLength(busNumbers.length() - 2);
-            }
-            holder.busNumber.setText(busNumbers);
+        String buses = busRoutes.get(stationId);
+        if (buses != null) {
+            holder.busNumber.setText(buses);
         } else {
             holder.busNumber.setText("");
         }
-
+        if(station.isReversed()){
+        holder.imageView.setImageResource(R.drawable.ic_baseline_directions_busreversed_24);}
         return convertView;
     }
 
     static class ViewHolder {
         TextView stationName;
         TextView busNumber;
+        ImageView imageView;
     }
 
 }

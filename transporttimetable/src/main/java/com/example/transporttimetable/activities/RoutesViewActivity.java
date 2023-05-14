@@ -170,6 +170,14 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
             stationViewActivity.putExtra("stationId",station.getId());
             stationViewActivity.putExtra("busId",busId);
             stationViewActivity.putExtra("stationName",station.getName());
+
+            if(directRouteButton.isEnabled()){
+                stationViewActivity.putExtra("stationReversed",true);
+            }
+            if(returnRouteButton.isEnabled()){
+                stationViewActivity.putExtra("stationReversed",false);
+            }
+
             startActivity(stationViewActivity);
         }
     }

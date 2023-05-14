@@ -12,9 +12,7 @@ import com.yandex.mapkit.geometry.Point;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 public class DbHelper{
 
@@ -32,7 +30,6 @@ public class DbHelper{
     }
 
     public ArrayList<Station> getAllStations(String stationName) {
-        HashSet<Station> uniqueStations = new HashSet<>();
         ArrayList<Station> stations = new ArrayList<>();
         if(stationName !=null){
             Stations.selectKeys(keysToStations);
@@ -50,10 +47,8 @@ public class DbHelper{
                     s.setName(name);
                     s.setId(id);
                     s.setCoordinates(point);
-                    Log.e("DBTEST", name);
-                    uniqueStations.add(s);
+                    stations.add(s);
                 }
-                stations = new ArrayList<>(uniqueStations);
                 return stations;
             } catch (ParseException e) {
                 Log.e("DbHelper", "Error retrieving data: " + e.getMessage());
@@ -92,11 +87,12 @@ public class DbHelper{
         return Bus;
     }
 
-    public ArrayList<Bus> getBusByStation(int stationId){
+    public ArrayList<Bus> getBusByStation(int stationId, boolean stationReversed){
         ArrayList<Bus> Bus = new ArrayList<>();
         String stationIdStr = ","+String.valueOf(stationId)+",";
+
         try {
-            Routes.whereContains("ID_STATIONS", stationIdStr).whereEqualTo("Reversed", false);
+            Routes.whereContains("ID_STATIONS", stationIdStr).whereEqualTo("Reversed", stationReversed);
             List<ParseObject> routesResults = Routes.find();
             List<Integer> busIds = new ArrayList<>();
 
@@ -111,18 +107,12 @@ public class DbHelper{
 
             for (ParseObject bus : busesResults) {
                 Bus b = new Bus();
-                int id = bus.getInt("ID");
-                String numberOfBus = bus.getString("NumberOfBus");
-                String interval = bus.getString("Interval");
-                String firstDeparture = bus.getString("FirstDeparture");
-                String lastDeparture = bus.getString("LastDeparture");
-                int transportType = bus.getInt("TransportType");
-                b.setId(id);
-                b.setBusNumber(numberOfBus);
-                b.setInterval(interval);
-                b.setFirstDeparture(firstDeparture);
-                b.setLastDeparture(lastDeparture);
-                b.setTransportType(transportType);
+                b.setId(bus.getInt("ID"));
+                b.setBusNumber(bus.getString("NumberOfBus"));
+                b.setInterval(bus.getString("Interval"));
+                b.setFirstDeparture(bus.getString("FirstDeparture"));
+                b.setLastDeparture(bus.getString("LastDeparture"));
+                b.setTransportType(bus.getInt("TransportType"));
                 Bus.add(b);
             }
         } catch (ParseException e) {
@@ -131,11 +121,11 @@ public class DbHelper{
         return Bus;
     }
 
-    public List<String> getBusesByStation(int stationId) {
+    public String getBusesByStation(int stationId,boolean reversed) {
         String stationIdStr = "," + String.valueOf(stationId) + ",";
-        List<String> busNumbers = new ArrayList<>();
+        StringBuilder busesString = new StringBuilder();
         try {
-            Routes.whereContains("ID_STATIONS", stationIdStr).whereEqualTo("Reversed", false);
+            Routes.whereContains("ID_STATIONS", stationIdStr).whereEqualTo("Reversed", reversed);
             List<ParseObject> routesResults = Routes.find();
 
             List<Integer> busIds = new ArrayList<>();
@@ -148,16 +138,20 @@ public class DbHelper{
             Buses.whereContainedIn("ID", busIds);
 
             List<ParseObject> busesResults = Buses.find();
-
             for (ParseObject bus : busesResults) {
                 String numberOfBus = bus.getString("NumberOfBus");
-                busNumbers.add(numberOfBus);
+                busesString.append(numberOfBus);
+                busesString.append(", ");
             }
-            return busNumbers;
+            // Убираем последнюю запятую из строки
+            if (busesString.length() > 0) {
+                busesString.setLength(busesString.length() - 2);
+            }
+            return busesString.toString();
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        return busNumbers;
+        return busesString.toString();
     }
     public int getTimeByRoute(int idBus, int idStation){ //Test method
         ArrayList<Integer> Time = new ArrayList<>();
