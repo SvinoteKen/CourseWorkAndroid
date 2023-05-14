@@ -95,7 +95,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         gridView.setOnItemClickListener(this);
         try
         {
-            stationIdForTime = (int) getIntent().getSerializableExtra("stationId");
+            stationId = (int) getIntent().getSerializableExtra("stationId");
             stationName = (String) getIntent().getSerializableExtra("stationName");
             stationReversed = (Boolean) getIntent().getSerializableExtra("stationReversed");
             isDataLoaded =true;
@@ -183,13 +183,13 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
 
         @Override
         protected ArrayList<Bus> doInBackground(Void... voids) {
-            return dbHelper.getBusByStation(stationIdForTime,stationReversed);
+            return dbHelper.getBusByStation(stationId,stationReversed);
         }
 
         @Override
         protected void onPostExecute(ArrayList<Bus> buses) {
             if (!isInfoLoaded) {
-                stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName, stationIdForTime);
+                stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName, stationId);
                 gridView.setAdapter(stationInfoAdapter);
                 isInfoLoaded = true;
                 isDataLoaded = true;
