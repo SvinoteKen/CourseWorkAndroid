@@ -21,7 +21,7 @@
             android:backgroundTint="#7B30BD">
 
             <TextView
-                android:id="@+id/textView2"
+                android:id="@+id/title"
                 android:layout_width="348dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"

@@ -189,7 +189,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         @Override
         protected void onPostExecute(ArrayList<Bus> buses) {
             if (!isInfoLoaded) {
-                stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName, stationId);
+                stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName, stationIdForTime);
                 gridView.setAdapter(stationInfoAdapter);
                 isInfoLoaded = true;
                 isDataLoaded = true;

@@ -21,7 +21,7 @@ public class DbHelper{
     private static final List<String> keysToRoutes = Arrays.asList("ID", "ID_BUS", "ID_STATIONS", "Name", "Reversed", "Time");
     private final ParseQuery<ParseObject> Buses;
     private final ParseQuery<ParseObject> Routes;
-    private final ParseQuery<ParseObject> Stations;
+    public ParseQuery<ParseObject> Stations;
     public DbHelper(){
         Stations = ParseQuery.getQuery("Stations");
         Buses = ParseQuery.getQuery("Buses");

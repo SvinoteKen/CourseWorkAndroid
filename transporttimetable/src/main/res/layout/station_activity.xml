@@ -19,7 +19,7 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textView2"
+                android:id="@+id/title"
                 android:layout_width="133dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"

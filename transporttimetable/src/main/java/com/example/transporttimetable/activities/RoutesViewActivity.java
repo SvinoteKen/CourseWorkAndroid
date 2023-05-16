@@ -53,7 +53,7 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
         setContentView(R.layout.route_activity);
 
         gridView = findViewById(R.id.gridView);
-        viewOnMap = findViewById(R.id.viewOnMapStation);
+        viewOnMap = findViewById(R.id.viewOnMapRoute);
         directRouteButton = findViewById(R.id.directRouteButton);
         returnRouteButton = findViewById(R.id.returnRouteButton);
         busButton = findViewById(R.id.busButton);
