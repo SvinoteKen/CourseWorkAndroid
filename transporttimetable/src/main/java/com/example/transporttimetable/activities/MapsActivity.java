@@ -265,6 +265,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
             HashSet<String> knownVehicleTypes = new HashSet<>();
             knownVehicleTypes.add("bus");
             knownVehicleTypes.add("tramway");
+            knownVehicleTypes.add("trolleybus");
             for (Transport transport : data.getTransports()) {
                 String sectionVehicleType = getVehicleType(transport, knownVehicleTypes);
                 if (sectionVehicleType.equals("bus")) {
@@ -273,7 +274,11 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 } else if (sectionVehicleType.equals("tramway")) {
                     polylineMapObject.setStrokeColor(0xFFFF0000);  // Red
                     return;
-                }
+                } else if (sectionVehicleType.equals("trolleybus")) {
+                polylineMapObject.setStrokeColor(0xFFFF0000);  // Yellow
+                return;
+            }
+
             }
             polylineMapObject.setStrokeColor(0xFF000000);  // Black
         } else {

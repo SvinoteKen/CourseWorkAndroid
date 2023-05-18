@@ -2,10 +2,9 @@ package com.example.transporttimetable.models;
 
 import com.yandex.mapkit.geometry.Point;
 
-import java.io.Serializable;
 import java.util.Comparator;
 
-public class Station implements Serializable {
+public class Station {
 
     private int id;
 

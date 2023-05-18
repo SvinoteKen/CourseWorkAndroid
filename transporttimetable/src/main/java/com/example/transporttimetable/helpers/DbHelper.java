@@ -29,7 +29,7 @@ public class DbHelper{
 
     }
 
-    public ArrayList<Station> getAllStations(String stationName) {
+    public ArrayList<Station> searchStations(String stationName) {
         ArrayList<Station> stations = new ArrayList<>();
         if(stationName !=null){
             Stations.selectKeys(keysToStations);

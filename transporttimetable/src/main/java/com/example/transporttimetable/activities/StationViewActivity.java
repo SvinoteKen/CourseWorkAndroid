@@ -147,7 +147,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         protected Map<Integer, String> doInBackground(Void... voids) {
             Map<Integer, String> busRoutes = new HashMap<>();
             String buses;
-            stations = dbHelper.getAllStations(searchStation);
+            stations = dbHelper.searchStations(searchStation);
             ArrayList<String> wordsList = new ArrayList<>();
             for (Station station : stations) {
                 int stationId = station.getId();

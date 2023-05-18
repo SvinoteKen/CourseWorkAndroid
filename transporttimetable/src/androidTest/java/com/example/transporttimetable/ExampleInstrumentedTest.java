@@ -1,29 +1,20 @@
 package com.example.transporttimetable;
 
-import static android.provider.Settings.System.getString;
-
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runner.manipulation.Ordering;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
 
 import android.content.Context;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.example.transporttimetable.activities.MainActivity;
 import com.example.transporttimetable.helpers.DbHelper;
 import com.example.transporttimetable.models.Station;
 import com.parse.Parse;
@@ -67,7 +58,7 @@ public class ExampleInstrumentedTest{
 
 
         // Вызываем тестируемый метод
-        ArrayList<Station> stations = dbHelper.getAllStations("ДС Крытый рынок");
+        ArrayList<Station> stations = dbHelper.searchStations("ДС Крытый рынок");
 
         // Проверяем результаты
         Assert.assertEquals(1, stations.size());
