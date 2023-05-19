@@ -33,7 +33,7 @@ import com.parse.ParseQuery;
  */
 @RunWith(MockitoJUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class ExampleInstrumentedTest{
+public class DatabaseTests {
 
     private void initDB(){
         Parse.initialize(new Parse.Configuration.Builder(appContext)
