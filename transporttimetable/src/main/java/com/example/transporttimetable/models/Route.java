@@ -6,7 +6,7 @@ public class Route {
 
     private int bus;
 
-    private int stop;
+    private String stop;
 
     private String Name;
 
@@ -17,7 +17,7 @@ public class Route {
     public Route() {
     }
 
-    public Route(int bus, int stop, String Name, Boolean Reversed, String Time) {
+    public Route(int bus, String stop, String Name, Boolean Reversed, String Time) {
         this.bus = bus;
         this.stop = stop;
         this.Name = Name;
@@ -41,11 +41,11 @@ public class Route {
         this.bus = bus;
     }
 
-    public int getStop() {
+    public String getStop() {
         return stop;
     }
 
-    public void setStop(int stop) {
+    public void setStop(String stop) {
         this.stop = stop;
     }
 

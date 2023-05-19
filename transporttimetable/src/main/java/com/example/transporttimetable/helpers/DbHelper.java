@@ -196,8 +196,8 @@ public class DbHelper{
             for (ParseObject route : routesResults) {
                 Route r = new Route();
                 int id = route.getInt("ID");
-                int idS = route.getInt("ID_BUS");
-                int idB = route.getInt("ID_STATION");
+                String idS = route.getString("ID_STATION");
+                int idB = route.getInt("ID_BUS");
                 String name = route.getString("Name");
                 Boolean reversed = route.getBoolean("Reversed");
                 r.setName(name);
