@@ -2,7 +2,7 @@
     <string name="app_name">TransportTimetable</string>
     <string name="title_view">Донецк</string>
     <string name="title">Карта Донецка</string>
-    <string name="switchText">Трафик</string>
+    <string name="switchText">траффик</string>
 
     <string name="back4app_server_url">https://parseapi.back4app.com/</string>
 

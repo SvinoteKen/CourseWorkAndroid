@@ -44,6 +44,7 @@ import com.yandex.mapkit.transport.masstransit.TransitOptions;
 import com.yandex.mapkit.transport.masstransit.Transport;
 import com.yandex.mapkit.user_location.UserLocationLayer;
 import com.yandex.runtime.Error;
+import com.yandex.runtime.i18n.I18nManagerFactory;
 import com.yandex.runtime.network.NetworkError;
 import com.yandex.runtime.network.RemoteError;
 
@@ -74,7 +75,9 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 .clientKey(getString(R.string.back4app_client_key))
                 .server(getString(R.string.back4app_server_url))
                 .build());
+
         MapKitFactory.initialize(this);
+
         setContentView(R.layout.map);
 
         mapview = (MapView)findViewById(R.id.mapView);

@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import com.example.transporttimetable.R;
 import com.yandex.mapkit.MapKitFactory;
+import com.yandex.runtime.i18n.I18nManagerFactory;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -20,6 +21,8 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.util.Locale;
+
 public class MainActivity extends Activity {
 
     private static final int REQUEST_PERMISSION_PHONE_STATE = 1;
@@ -28,6 +31,9 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Locale locale = new Locale("ru_RU");
+        Locale.setDefault(locale);
+        MapKitFactory.setLocale("ru_RU");
         MapKitFactory.setApiKey("43cc20bb-8e7f-4168-a3c0-910cd451d895");
         showPhoneStatePermission();
         LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);

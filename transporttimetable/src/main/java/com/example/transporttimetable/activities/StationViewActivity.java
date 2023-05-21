@@ -96,9 +96,11 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
         try
         {
             stationId = (int) getIntent().getSerializableExtra("stationId");
+            stationIdForTime = stationId;
             stationName = (String) getIntent().getSerializableExtra("stationName");
             stationReversed = (Boolean) getIntent().getSerializableExtra("stationReversed");
             isDataLoaded =true;
+            searchText.setVisibility(View.INVISIBLE);
             new LoadStationInfoTask().execute();
         } catch (NullPointerException e) {
             Log.e("StationInfoLoad", e.getMessage());
@@ -117,6 +119,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long l) {
         if(isDataLoaded && !isInfoLoaded){
             viewOnMap.setVisibility(View.VISIBLE);
+            searchText.setVisibility(View.INVISIBLE);
             viewOnMap.setEnabled(true);
             station = (Station) adapterView.getItemAtPosition(position);
             stationId = station.getId();
@@ -129,6 +132,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     public void onBackPressed() {
         isDataLoaded = false;
         new LoadStationDataTask().execute();
+        searchText.setVisibility(View.VISIBLE);
         if(!isInfoLoaded){
             super.onBackPressed();
         }
