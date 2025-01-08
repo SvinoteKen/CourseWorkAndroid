@@ -195,6 +195,8 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
             if (!isInfoLoaded) {
                 stationInfoAdapter = new StationInfoAdapter(StationViewActivity.this, buses, stationName, stationIdForTime);
                 gridView.setAdapter(stationInfoAdapter);
+                viewOnMap.setVisibility(View.VISIBLE);
+                viewOnMap.setEnabled(true);
                 isInfoLoaded = true;
                 isDataLoaded = true;
             }
