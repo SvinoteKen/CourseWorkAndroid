@@ -3,10 +3,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -56,7 +59,7 @@ import java.util.Random;
 
 public class MapsActivity extends AppCompatActivity implements Session.RouteListener {
     private MapObjectCollection mapObjects;
-
+    Button routeBuilderButton;
     public MapView mapview;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     public Switch traffic;
@@ -67,6 +70,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
     private final Point TARGET_LOCATION = new Point(48.010591, 37.838702);
 
     Station station = new Station();
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,6 +115,15 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 drawOnMap();
             }
         }, DELAY_MILLIS);
+
+        routeBuilderButton = findViewById(R.id.routeBuilderButton);
+        routeBuilderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent RouteBuilding = new Intent(MapsActivity.this, RouteBuilding.class);
+                startActivity(RouteBuilding);
+            }
+        });
     }
 
     private void setMapZoom(Point point, float zoom){

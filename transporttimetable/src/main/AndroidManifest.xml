@@ -17,6 +17,10 @@
             android:label="Map"/>
         <activity android:name=".activities.RoutesViewActivity"
             android:label="Routs"/>
+        <activity android:name=".activities.RouteBuilding"
+            android:label="RouteBuilding"/>
+        <activity android:name=".activities.StationChooseActivity"
+            android:label="StationChoose"/>
         <activity android:name=".activities.StationViewActivity"
             android:label="@string/title_view">
         </activity>

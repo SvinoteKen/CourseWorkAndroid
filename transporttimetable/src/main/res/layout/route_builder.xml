@@ -39,7 +39,7 @@
                 android:clickable="true"
                 android:focusable="false"
                 android:minHeight="48dp"
-                android:text="Откуда"
+                android:hint="Откуда"
                 android:textColor="#FFFFFF" />
 
             <Button
@@ -86,7 +86,7 @@
                 android:clickable="true"
                 android:focusable="false"
                 android:minHeight="48dp"
-                android:text="Куда"
+                android:hint="Куда"
                 android:textColor="#FFFFFF" />
 
             <Button

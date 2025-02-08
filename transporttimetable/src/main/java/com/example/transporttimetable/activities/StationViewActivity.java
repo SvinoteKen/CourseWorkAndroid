@@ -35,7 +35,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     Station station;
     String stationName = null;
     Boolean stationReversed = false;
-            StationAdapter stationAdapter;
+    StationAdapter stationAdapter;
     StationInfoAdapter stationInfoAdapter;
     DbHelper dbHelper;
     int stationId = 0;

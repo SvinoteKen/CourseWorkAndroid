@@ -53,10 +53,10 @@
             android:layout_height="match_parent"/>
 
         <Button
-            android:id="@+id/transparentButton"
+            android:id="@+id/routeBuilderButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Нажми меня"
+            android:text="Построить маршрут"
             android:layout_gravity="bottom"
             android:layout_margin="10dp"
             android:background="@drawable/rounded_button"
