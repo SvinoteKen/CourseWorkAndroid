@@ -29,6 +29,31 @@ public class DbHelper{
 
     }
 
+    public ArrayList<Station> getStations() {
+        ArrayList<Station> stations = new ArrayList<>();
+        Stations.selectKeys(keysToStations);
+        try {
+            List<ParseObject> results = Stations.find();
+
+            for (ParseObject station : results) {
+                Station s = new Station();
+                int id = station.getInt("ID");
+                String name = station.getString("Name");
+                ParseGeoPoint coordinates = station.getParseGeoPoint("Coordinates");
+                assert coordinates != null;
+                Point point = new Point(coordinates.getLatitude(), coordinates.getLongitude());
+                s.setName(name);
+                s.setId(id);
+                s.setCoordinates(point);
+                stations.add(s);
+            }
+            return stations;
+        } catch (ParseException e) {
+            Log.e("DbHelper", "Error retrieving data: " + e.getMessage());
+        }
+        return stations;
+    }
+
     public ArrayList<Station> searchStations(String stationName) {
         ArrayList<Station> stations = new ArrayList<>();
         if(stationName !=null){
