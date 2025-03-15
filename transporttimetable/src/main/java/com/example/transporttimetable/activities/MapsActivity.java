@@ -3,6 +3,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.appsearch.SearchResult;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import com.example.transporttimetable.helpers.DbHelper;
 import com.example.transporttimetable.models.Station;
 import com.parse.Parse;
 import com.yandex.mapkit.Animation;
+import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.MapKit;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
@@ -34,6 +37,9 @@ import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.MapObjectTapListener;
 import com.yandex.mapkit.map.PolylineMapObject;
 import com.yandex.mapkit.mapview.MapView;
+import com.yandex.mapkit.places.panorama.PanoramaService;
+import com.yandex.mapkit.search.Response;
+import com.yandex.mapkit.search.SearchManager;
 import com.yandex.mapkit.traffic.TrafficLayer;
 import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.mapkit.transport.masstransit.FilterVehicleTypes;
@@ -50,11 +56,15 @@ import com.yandex.runtime.Error;
 import com.yandex.runtime.i18n.I18nManagerFactory;
 import com.yandex.runtime.network.NetworkError;
 import com.yandex.runtime.network.RemoteError;
-
+import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.map.CameraPosition;
+import com.yandex.mapkit.search.*;
+import com.yandex.runtime.Error;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 public class MapsActivity extends AppCompatActivity implements Session.RouteListener {
@@ -68,7 +78,9 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
     private Session drivingSession2 = null;
     private static final int DELAY_MILLIS = 5000; // 5 seconds delay
     private final Point TARGET_LOCATION = new Point(48.010591, 37.838702);
-
+    private SearchManager searchManager;
+    private Session searchSession;
+    private boolean fromRouteBuilding = false; // Флаг, вызван ли из RouteBuilding
     Station station = new Station();
     @SuppressLint("MissingInflatedId")
     @Override
@@ -115,13 +127,66 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 drawOnMap();
             }
         }, DELAY_MILLIS);
-
         routeBuilderButton = findViewById(R.id.routeBuilderButton);
+        Intent intent = getIntent();
+        if (intent.hasExtra("buttonText")) {
+            routeBuilderButton.setText(intent.getStringExtra("buttonText"));
+            fromRouteBuilding = true;
+        }
         routeBuilderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent RouteBuilding = new Intent(MapsActivity.this, RouteBuilding.class);
-                startActivity(RouteBuilding);
+                if (fromRouteBuilding) {
+                    Log.e("ИЗ","2222222222222222222222222222222222");
+                    getAddressFromMapCenter(); // Если вызвано из RouteBuilding, получаем адрес
+                } else {
+                    Log.e("Неиз","1111111111111111111111111111111");
+                    // Если вызвано НЕ из RouteBuilding, открываем RouteBuilding
+                    Intent routeIntent = new Intent(MapsActivity.this, RouteBuilding.class);
+                    startActivity(routeIntent);
+                }
+
+            }
+        });
+
+    }
+
+
+    // Метод для получения адреса в центре карты
+    private void getAddressFromMapCenter() {
+        // 1. Получаем центр карты
+        Point center = mapview.getMap().getCameraPosition().getTarget();
+        // 2. Создаем экземпляр SearchManager
+        SearchManager searchManager = SearchFactory.getInstance().createSearchManager(SearchManagerType.COMBINED);
+        // 3. Определяем параметры поиска
+        SearchOptions searchOptions = new SearchOptions();
+        searchOptions.setSearchTypes(SearchType.GEO.value);  // Ищем только географические объекты
+        searchOptions.setResultPageSize(1);  // Нам нужен только один результат
+        // 4. Запускаем сессию поиска
+        searchManager.submit(center, 16, searchOptions, new com.yandex.mapkit.search.Session.SearchListener() {
+            @Override
+            public void onSearchResponse(Response response) {
+                if (!response.getCollection().getChildren().isEmpty()) {
+                    GeoObject searchResult = response.getCollection().getChildren().get(0).getObj();
+                    if (searchResult != null) {
+                        ToponymObjectMetadata metadata = searchResult.getMetadataContainer().getItem(ToponymObjectMetadata.class);
+                        String streetName = metadata.getAddress().getFormattedAddress();
+                        Log.d("Search", "Найден адрес: " + streetName);
+
+                        // Передача адреса обратно в RouteBuilding
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("latitude", center.getLatitude());
+                        resultIntent.putExtra("longitude", center.getLongitude());
+                        resultIntent.putExtra("streetName", streetName);
+                        setResult(Activity.RESULT_OK, resultIntent);
+                        finish();
+                    }
+                }
+            }
+
+            @Override
+            public void onSearchError(Error error) {
+                Log.e("Search", "Ошибка поиска: " + error.toString());
             }
         });
     }

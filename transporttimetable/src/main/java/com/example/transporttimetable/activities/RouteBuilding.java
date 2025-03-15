@@ -1,6 +1,7 @@
 package com.example.transporttimetable.activities;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,6 +13,8 @@ import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.transporttimetable.R;
@@ -48,6 +51,16 @@ public class RouteBuilding extends AppCompatActivity {
         swapButton = findViewById(R.id.swapButton);
         buildRouteButton = findViewById(R.id.buildRouteButton);
         routeNumber = findViewById(R.id.routeNumber);
+
+        fromMapButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent stationMapChooseActivity = new Intent(RouteBuilding.this, MapsActivity.class);
+                stationMapChooseActivity.putExtra("buttonText","Готово");
+                stationMapChooseActivity.putExtra("savedTo", toField.getText().toString());
+                startActivityForResult(stationMapChooseActivity, 100);
+            }
+        });
 
         fromField.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,7 +106,35 @@ public class RouteBuilding extends AppCompatActivity {
             }
         });
     }
+    private final ActivityResultLauncher<Intent> mapsActivityLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Intent data = result.getData();
+                    double latitude = data.getDoubleExtra("latitude", 0);
+                    double longitude = data.getDoubleExtra("longitude", 0);
+                    String streetName = data.getStringExtra("streetName");
+                    String fullAddress = data.getStringExtra("fullAddress");
 
+                    // Отображаем полученные данные
+
+                }
+            }
+    );
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100 && resultCode == Activity.RESULT_OK) {
+            String streetName = data.getStringExtra("streetName");
+            double latitude = data.getDoubleExtra("latitude", 0.0);
+            double longitude = data.getDoubleExtra("longitude", 0.0);
+
+            Log.d("RouteBuilding", "Получен адрес: " + streetName);
+            Log.d("RouteBuilding", "Координаты: " + latitude + ", " + longitude);
+            Log.e("Тест","Улица: " + streetName + "\nКоординаты: " + latitude + ", " + longitude);
+            fromField.setText(streetName);
+        }
+    }
     @Override
     protected void onResume() {
         super.onResume();
