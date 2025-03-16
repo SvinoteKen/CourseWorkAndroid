@@ -106,7 +106,9 @@ public class StationChooseActivity extends AppCompatActivity implements AdapterV
         String text = String.valueOf(chooseField.getText());
         String hint = (String) getIntent().getSerializableExtra("hintText");
         RouteBuilding.putExtra("direction", hint);
-        RouteBuilding.putExtra("valueStation", station.getName());
+        RouteBuilding.putExtra("streetName", station.getName());
+        RouteBuilding.putExtra("latitude", station.getCoordinates().getLatitude());
+        RouteBuilding.putExtra("longitude", station.getCoordinates().getLongitude());
         Intent intent = getIntent();
         if (intent.hasExtra("savedFrom")) {
             RouteBuilding.putExtra("savedFrom", intent.getStringExtra("savedFrom"));

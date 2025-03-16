@@ -61,7 +61,15 @@ public class RouteBuilding extends AppCompatActivity {
                 startActivityForResult(stationMapChooseActivity, 100);
             }
         });
-
+        toMapButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent stationMapChooseActivity = new Intent(RouteBuilding.this, MapsActivity.class);
+                stationMapChooseActivity.putExtra("buttonText","Готово");
+                stationMapChooseActivity.putExtra("savedFrom", fromField.getText().toString());
+                startActivityForResult(stationMapChooseActivity, 100);
+            }
+        });
         fromField.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -106,21 +114,7 @@ public class RouteBuilding extends AppCompatActivity {
             }
         });
     }
-    private final ActivityResultLauncher<Intent> mapsActivityLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Intent data = result.getData();
-                    double latitude = data.getDoubleExtra("latitude", 0);
-                    double longitude = data.getDoubleExtra("longitude", 0);
-                    String streetName = data.getStringExtra("streetName");
-                    String fullAddress = data.getStringExtra("fullAddress");
 
-                    // Отображаем полученные данные
-
-                }
-            }
-    );
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -128,11 +122,15 @@ public class RouteBuilding extends AppCompatActivity {
             String streetName = data.getStringExtra("streetName");
             double latitude = data.getDoubleExtra("latitude", 0.0);
             double longitude = data.getDoubleExtra("longitude", 0.0);
-
+            String direction = data.getStringExtra("direction");
             Log.d("RouteBuilding", "Получен адрес: " + streetName);
             Log.d("RouteBuilding", "Координаты: " + latitude + ", " + longitude);
-            Log.e("Тест","Улица: " + streetName + "\nКоординаты: " + latitude + ", " + longitude);
-            fromField.setText(streetName);
+            Log.e("Тест","Улица: " + streetName + "\nКоординаты: " + latitude + ", " + longitude+ " Направление: "+ direction);
+            if ("Откуда".equals(direction)) {
+                fromField.setText(streetName);
+            } else if ("Куда".equals(direction)) {
+                toField.setText(streetName);
+            }
         }
     }
     @Override
@@ -141,7 +139,9 @@ public class RouteBuilding extends AppCompatActivity {
         try {
             Intent intent = getIntent();
             String direction = intent.getStringExtra("direction");
-            String valueStation = intent.getStringExtra("valueStation");
+            String valueStation = intent.getStringExtra("streetName");
+            double latitude = intent.getDoubleExtra("latitude", 0.0);
+            double longitude = intent.getDoubleExtra("longitude", 0.0);
 
             // Восстанавливаем сохраненные значения
             if (intent.hasExtra("savedFrom")) {
@@ -159,6 +159,7 @@ public class RouteBuilding extends AppCompatActivity {
             } else if ("Куда".equals(direction)) {
                 toField.setText(valueStation);
             }
+            Log.e("Тест","Улица: " + valueStation + "\nКоординаты: " + latitude + ", " + longitude+ "Направление: "+ direction);
         } catch (NullPointerException e) {
             Log.e("RouteBuilding", "Ошибка при обработке intent: " + e.getMessage());
         }

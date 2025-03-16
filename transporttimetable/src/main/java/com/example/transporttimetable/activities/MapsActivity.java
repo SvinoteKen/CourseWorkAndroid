@@ -179,6 +179,15 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                         resultIntent.putExtra("longitude", center.getLongitude());
                         resultIntent.putExtra("streetName", streetName);
                         setResult(Activity.RESULT_OK, resultIntent);
+                        Intent intent = getIntent();
+                        if (intent.hasExtra("savedFrom")) {
+                            resultIntent.putExtra("savedFrom", intent.getStringExtra("savedFrom"));
+                            resultIntent.putExtra("direction", "Куда");
+                        }
+                        if (intent.hasExtra("savedTo")) {
+                            resultIntent.putExtra("savedTo", intent.getStringExtra("savedTo"));
+                            resultIntent.putExtra("direction", "Откуда");
+                        }
                         finish();
                     }
                 }
@@ -200,7 +209,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
 
     private void drawOnMap(){
         ArrayList<RequestPoint> points = new ArrayList<>();
-        TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
+        TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.BUS.value, new TimeOptions());
         try
         {
             Point point = new Point((double) getIntent().getSerializableExtra("stationLatitude"),
@@ -229,11 +238,11 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
             Station lastElement = Stations.get(Stations.size() - 1);
             points.add(new RequestPoint(new Point(firstElement.getCoordinates().getLatitude(),
                     firstElement.getCoordinates().getLongitude()),RequestPointType.WAYPOINT, ""));
-            for (int i = 1; i < Stations.size() - 1; i++) {
+            /*for (int i = 1; i < Stations.size() - 1; i++) {
                 Station station = Stations.get(i);
                 points.add(new RequestPoint(new Point(station.getCoordinates().getLatitude(),
                         station.getCoordinates().getLongitude()),RequestPointType.VIAPOINT, ""));
-            }
+            }*/
             points.add(new RequestPoint(new Point(lastElement.getCoordinates().getLatitude(),
                     lastElement.getCoordinates().getLongitude()), RequestPointType.WAYPOINT, ""));
             if(points.size()>19){
@@ -336,6 +345,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
         PolylineMapObject polylineMapObject = mapObjects.addPolyline(geometry);
         if (data.getTransports() != null) {
             for (Transport transport : data.getTransports()) {
+                Log.d("drawSection", "Transport type: " + transport.getLine().getVehicleTypes());
                 if (transport.getLine().getStyle() != null) {
                     polylineMapObject.setStrokeColor(
                             transport.getLine().getStyle().getColor() | 0xFF000000
@@ -349,19 +359,18 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
             knownVehicleTypes.add("trolleybus");
             for (Transport transport : data.getTransports()) {
                 String sectionVehicleType = getVehicleType(transport, knownVehicleTypes);
-                if (sectionVehicleType.equals("bus")) {
+                if ("bus".equals(sectionVehicleType)) {  // Избегаем sectionVehicleType.equals("bus")
                     polylineMapObject.setStrokeColor(0xFF00FF00);  // Green
                     return;
-                } else if (sectionVehicleType.equals("tramway")) {
+                } else if ("tramway".equals(sectionVehicleType)) {
                     polylineMapObject.setStrokeColor(0xFFFF0000);  // Red
                     return;
-                } else if (sectionVehicleType.equals("trolleybus")) {
-                polylineMapObject.setStrokeColor(0xFFFF0000);  // Yellow
-                return;
-            }
+                } else if ("trolleybus".equals(sectionVehicleType)) {
+                    polylineMapObject.setStrokeColor(0xFFFFAA00);  // Yellow
+                    return;
+                }
 
             }
-            polylineMapObject.setStrokeColor(0xFF000000);  // Black
         } else {
             polylineMapObject.setStrokeColor(0xFF0000FF);  // Blue
         }
