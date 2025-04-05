@@ -1,48 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#BD8FF6"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#FFFFFF"
-        android:backgroundTint="#7B30BD">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-
-            <TextView
-                android:id="@+id/title"
-                android:layout_width="209dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="20dp"
-                android:text="@string/title"
-                android:textColor="#FFFFFF"
-                android:textSize="24sp" />
-
-            <Switch
-                android:id="@+id/trafficSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="20dp"
-                android:text="@string/switchText"
-                android:textColor="#00C1FF"
-                android:textSize="20sp"
-                tools:ignore="UseSwitchCompatOrMaterialXml" />
-
-        </LinearLayout>
-
-    </FrameLayout>
-
+    <!-- Карта -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -50,7 +14,7 @@
         <com.yandex.mapkit.mapview.MapView
             android:id="@+id/mapView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent" />
 
         <Button
             android:id="@+id/routeBuilderButton"
@@ -64,4 +28,66 @@
             android:padding="12dp"/>
     </FrameLayout>
 
-</LinearLayout>
+    <View
+        android:id="@+id/dimView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:visibility="gone" />
+
+    <!-- BottomSheet -->
+    <FrameLayout
+        android:id="@+id/bottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#303030"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <LinearLayout
+        android:id="@+id/bottomSheetContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/headerText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ул. Профсоюзная, 256 — Петроковский бульвар"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"/>
+
+        <!-- GridView маршрутов -->
+        <GridView
+            android:id="@+id/routesGridView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:numColumns="1"
+            android:verticalSpacing="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- GridView остановок (изначально скрыт) -->
+        <GridView
+            android:id="@+id/stopsGridView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:numColumns="1"
+            android:verticalSpacing="4dp"
+            android:visibility="gone"
+            android:layout_marginTop="8dp" />
+
+        <!-- Кнопка показать все -->
+        <Button
+            android:id="@+id/showAllVariantsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Смотреть все варианты"
+            android:background="@drawable/rounded_button"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="12dp"/>
+        </LinearLayout>
+    </FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

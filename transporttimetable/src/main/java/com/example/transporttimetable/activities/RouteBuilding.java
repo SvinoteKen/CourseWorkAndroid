@@ -103,6 +103,7 @@ public class RouteBuilding extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent mapsActivity = new Intent(RouteBuilding.this, MapsActivity.class);
+                mapsActivity.putExtra("Test", "1");
                 startActivity(mapsActivity);
             }
         });

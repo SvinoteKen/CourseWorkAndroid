@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -19,6 +20,7 @@ import android.widget.Toast;
 import com.example.transporttimetable.R;
 import com.example.transporttimetable.helpers.DbHelper;
 import com.example.transporttimetable.models.Station;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.parse.Parse;
 import com.yandex.mapkit.Animation;
 import com.yandex.mapkit.GeoObject;
@@ -82,6 +84,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
     private Session searchSession;
     private boolean fromRouteBuilding = false; // Флаг, вызван ли из RouteBuilding
     Station station = new Station();
+    BottomSheetBehavior<View> bottomSheetBehavior;
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +98,49 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
         MapKitFactory.initialize(this);
 
         setContentView(R.layout.map);
+        View dimView = findViewById(R.id.dimView);
+        View bottomSheet = findViewById(R.id.bottomSheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int screenHeight = displayMetrics.heightPixels;
+        int quarterHeight = screenHeight / 3;
+
+        bottomSheetBehavior.setPeekHeight(quarterHeight);
+        // Начальное состояние — свернуто
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        bottomSheetBehavior.setHideable(true);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        // Слушатель состояния
+        // Затемнение + переключения состояний
+        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        dimView.setVisibility(View.VISIBLE);
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        dimView.setVisibility(View.VISIBLE);
+                        break;
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                        dimView.setVisibility(View.GONE);
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // Плавное затемнение
+                dimView.setAlpha(slideOffset);
+                if (slideOffset > 0) {
+                    dimView.setVisibility(View.VISIBLE);
+                } else {
+                    dimView.setVisibility(View.GONE);
+                }
+            }
+        });
+
 
         mapview = (MapView)findViewById(R.id.mapView);
         mapview.getMap().move(
@@ -107,7 +153,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
         UserLocationLayer locationUser = mapKit.createUserLocationLayer(mapview.getMapWindow());
         locationUser.setVisible(true);
 
-        traffic = (Switch) findViewById(R.id.trafficSwitch);
+        /*traffic = (Switch) findViewById(R.id.trafficSwitch);
         traffic.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -118,7 +164,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                     trafficJams.setTrafficVisible(false);
                 }
             }
-        });
+        });*/
         drivingRouter = TransportFactory.getInstance().createMasstransitRouter();
         mapObjects = mapview.getMap().getMapObjects().addCollection();
         new Handler().postDelayed(new Runnable() {
@@ -151,6 +197,23 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
 
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.e("MAPS", "FFFFFFFFFFFFFFFFFFFFFFF" );
+        try {
+            Intent intent = getIntent();
+            String direction = intent.getStringExtra("Test");
+            Log.e("MAPS", "DDDDDDDDDDDDDDDDDDD" );
+            if(Objects.equals(direction, "1")){
+                Log.e("MAPS", "22222222222222222" );
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        }
+        catch (NullPointerException e) {
+            Log.e("Ошибка при обработке intent", "Ошибка при обработке intent: " + e.getMessage());
+        }
+    }
 
     // Метод для получения адреса в центре карты
     private void getAddressFromMapCenter() {

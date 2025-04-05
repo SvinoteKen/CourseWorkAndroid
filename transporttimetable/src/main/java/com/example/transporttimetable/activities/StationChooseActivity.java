@@ -16,7 +16,6 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
