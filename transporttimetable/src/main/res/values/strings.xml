@@ -28,4 +28,5 @@
     <string name="remote_error_message">Remote server error</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="search">Поиск</string>
+    <string name="walk">walk</string>
 </resources>

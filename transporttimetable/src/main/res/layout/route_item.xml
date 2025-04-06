@@ -1,26 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:background="@drawable/rounded_button"
-    android:layout_marginBottom="4dp">
+    android:layout_margin="4dp"
+    card_view:cardCornerRadius="12dp"
+    card_view:cardBackgroundColor="#303030"
+    card_view:cardElevation="4dp">
 
-    <TextView
-        android:id="@+id/routeNameText"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Маршрут 1"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold"/>
+        android:orientation="vertical"
+        android:padding="12dp">
 
-    <TextView
-        android:id="@+id/routeTimeText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="20 мин"
-        android:textColor="#D0D0D0"
-        android:textSize="14sp"/>
-</LinearLayout>
+        <!-- Время и количество остановок -->
+        <TextView
+            android:id="@+id/time_range"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="07:00–07:30 (30 мин, 10 остановок)"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Контейнер маршрута -->
+        <LinearLayout
+            android:id="@+id/route_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_horizontal" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

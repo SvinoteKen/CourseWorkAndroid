@@ -69,7 +69,7 @@
             android:verticalSpacing="8dp"
             android:layout_marginBottom="8dp" />
 
-        <!-- GridView остановок (изначально скрыт) -->
+        <!-- GridView подробная информация -->
         <GridView
             android:id="@+id/stopsGridView"
             android:layout_width="match_parent"

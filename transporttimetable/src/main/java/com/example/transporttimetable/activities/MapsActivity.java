@@ -4,22 +4,29 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.appsearch.SearchResult;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.transporttimetable.R;
 import com.example.transporttimetable.helpers.DbHelper;
+import com.example.transporttimetable.helpers.RouteAdapter;
+import com.example.transporttimetable.models.RouteModel;
 import com.example.transporttimetable.models.Station;
+import com.example.transporttimetable.models.Step;
+import com.example.transporttimetable.models.StopModel;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.parse.Parse;
 import com.yandex.mapkit.Animation;
@@ -39,7 +46,6 @@ import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.MapObjectTapListener;
 import com.yandex.mapkit.map.PolylineMapObject;
 import com.yandex.mapkit.mapview.MapView;
-import com.yandex.mapkit.places.panorama.PanoramaService;
 import com.yandex.mapkit.search.Response;
 import com.yandex.mapkit.search.SearchManager;
 import com.yandex.mapkit.traffic.TrafficLayer;
@@ -55,19 +61,18 @@ import com.yandex.mapkit.transport.masstransit.TransitOptions;
 import com.yandex.mapkit.transport.masstransit.Transport;
 import com.yandex.mapkit.user_location.UserLocationLayer;
 import com.yandex.runtime.Error;
-import com.yandex.runtime.i18n.I18nManagerFactory;
 import com.yandex.runtime.network.NetworkError;
 import com.yandex.runtime.network.RemoteError;
-import com.yandex.mapkit.geometry.Point;
-import com.yandex.mapkit.map.CameraPosition;
 import com.yandex.mapkit.search.*;
-import com.yandex.runtime.Error;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+
 
 public class MapsActivity extends AppCompatActivity implements Session.RouteListener {
     private MapObjectCollection mapObjects;
@@ -209,6 +214,64 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 Log.e("MAPS", "22222222222222222" );
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
+            GridView gridView = findViewById(R.id.routesGridView);
+            GridView stopsGridView = findViewById(R.id.stopsGridView);
+            List<RouteModel> routes = new ArrayList<>();
+
+            routes.add(new RouteModel(
+                    "07:00–07:30 (30 мин, 10 остановок)",
+                    Arrays.asList(
+                            new Step.Walk(),
+                            new Step.Bus("3"),
+                            new Step.Transfer("13 мин"),
+                            new Step.Bus("49"),
+                            new Step.Walk()
+                    )));
+
+            routes.add(new RouteModel(
+                    "07:10–07:40 (30 мин, 12 остановок)",
+                    Arrays.asList(
+                            new Step.Walk(),
+                            new Step.Bus("122"),
+                            new Step.Walk()
+                    )));
+
+            RouteAdapter routeAdapter = new RouteAdapter(this, routes, stopsGridView);
+            gridView.setAdapter(routeAdapter);
+            GridView routesGridView = findViewById(R.id.routesGridView);
+            Button showAllButton = findViewById(R.id.showAllVariantsButton);
+
+
+            // обработка выбора маршрута
+            routesGridView.setOnItemClickListener((parent, view, position, id) -> {
+                RouteModel selectedRoute = routes.get(position);
+
+                // генерируем список остановок
+                List<StopModel> stops = new ArrayList<>();
+                stops.add(new StopModel("Парк Победы", "завтра 06:05"));
+                stops.add(new StopModel("8 остановок", ""));
+                // тут остановки развернутые:
+                stops.add(new StopModel("Колледж отраслевых технологий", "завтра 06:07"));
+                stops.add(new StopModel("КостромаЛадаСервис", "завтра 06:10"));
+                stops.add(new StopModel("ул. Октябрьская", "завтра 06:13"));
+                stops.add(new StopModel("мкр-н Черноречье", "завтра 06:15"));
+                stops.add(new StopModel("ул. Северной правды", "завтра 06:16"));
+                stops.add(new StopModel("КЦ Россия", "завтра 06:18"));
+                stops.add(new StopModel("пл. Конституции", "завтра 06:22"));
+
+
+                // показать остановки и кнопку
+                stopsGridView.setVisibility(View.VISIBLE);
+                showAllButton.setVisibility(View.VISIBLE);
+                routesGridView.setVisibility(View.GONE);
+            });
+
+            // обработка "Смотреть все варианты"
+            showAllButton.setOnClickListener(v -> {
+                stopsGridView.setVisibility(View.GONE);
+                showAllButton.setVisibility(View.GONE);
+                routesGridView.setVisibility(View.VISIBLE);
+            });
         }
         catch (NullPointerException e) {
             Log.e("Ошибка при обработке intent", "Ошибка при обработке intent: " + e.getMessage());

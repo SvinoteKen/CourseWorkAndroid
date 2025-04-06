@@ -1,11 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/stopNameText"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="horizontal"
     android:padding="8dp"
-    android:text="Остановка"
-    android:textColor="#FFFFFF"
-    android:background="@drawable/rounded_button"
-    android:textSize="14sp"
-    android:gravity="center"/>
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_walk"
+        android:contentDescription="@string/walk" />
+
+    <TextView
+        android:id="@+id/stop_name"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:paddingStart="8dp" />
+
+    <TextView
+        android:id="@+id/stop_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp" />
+</LinearLayout>
