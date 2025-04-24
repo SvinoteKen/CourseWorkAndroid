@@ -4,6 +4,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.example.transporttimetable.R;
+import com.example.transporttimetable.helpers.DbFetcher;
+import com.parse.Parse;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.runtime.i18n.I18nManagerFactory;
 
@@ -26,11 +28,25 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final int REQUEST_PERMISSION_PHONE_STATE = 1;
-
+    private DbFetcher dbFetcher;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Parse.initialize(new Parse.Configuration.Builder(this)
+                .applicationId(getString(R.string.back4app_app_id))
+                .clientKey(getString(R.string.back4app_client_key))
+                .server(getString(R.string.back4app_server_url))
+                .build());
+        dbFetcher = new DbFetcher(this);
+
+        dbFetcher.fetchAllDataFromDB(() -> {
+            // Этот код выполнится после завершения загрузки всех данных и записи в файлы
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Данные успешно загружены и сохранены", Toast.LENGTH_SHORT).show();
+                // Можешь вызвать следующий шаг, например — открыть другую активити или обновить UI
+            });
+        });
         Locale locale = new Locale("ru_RU");
         Locale.setDefault(locale);
         MapKitFactory.setLocale("ru_RU");

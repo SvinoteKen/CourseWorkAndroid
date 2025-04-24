@@ -53,8 +53,6 @@ public class StopDetailsAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.stop_item, parent, false);
             holder = new ViewHolder();
-            holder.icon = convertView.findViewById(R.id.stop_icon);
-            holder.detailText = convertView.findViewById(R.id.stop_detail);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();

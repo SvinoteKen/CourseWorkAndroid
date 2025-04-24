@@ -60,8 +60,9 @@ public class BusAdapter extends ArrayAdapter<Bus> {
         Bus bus = buses.get(position);
         int busId = bus.getId();
         ArrayList<Route> routes = db.getRoutsByBus(busId);
+        if(routes.size() != 0){
         holder.busNumber.setText(bus.getBusNumber());
-        holder.routeName.setText(routes.get(0).getName());
+        holder.routeName.setText(routes.get(0).getName());}
         return convertView;
     }
 

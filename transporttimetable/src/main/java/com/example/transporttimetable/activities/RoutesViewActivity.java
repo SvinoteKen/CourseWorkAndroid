@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageButton;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.transporttimetable.R;
@@ -42,7 +44,8 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
     RoutesInfoAdapter routesInfoAdapter;
 
     @SuppressLint("MissingInflatedId")
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbHelper = new DbHelper();
         Parse.initialize(new Parse.Configuration.Builder(this)
@@ -103,7 +106,9 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
             public void onClick(View v) {
                 Intent mapsActivity = new Intent(RoutesViewActivity.this, MapsActivity.class);
                 int busId = busInfo.getId();
-
+                if(Reversed){
+                    busId +=1;
+                }
                 mapsActivity.putExtra("busId",busId);
                 mapsActivity.putExtra("Reversed",Reversed);
                 startActivity(mapsActivity);
@@ -216,7 +221,11 @@ public class RoutesViewActivity extends AppCompatActivity implements AdapterView
 
         @Override
         protected ArrayList<Station> doInBackground(Void... voids) {
+            if(Reversed){
+                busId +=1;
+            }
             ArrayList<Station> stations = dbHelper.getRoutByBus(busId, Reversed);
+            Log.e("Проверка маршрута","Автобус id: "+busId+" Направление: " + Reversed);
             Collections.sort(stations, Station.getIndexComparator());
             return stations;
         }

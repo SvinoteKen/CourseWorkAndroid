@@ -45,9 +45,8 @@ public class StationChooseActivity extends AppCompatActivity implements AdapterV
     String searchStation = null;
     ArrayList<Station> stations = null;
     StationsAdapter stationsAdapter;
-    @SuppressLint("MissingInflatedId")
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbHelper = new DbHelper();
         Parse.initialize(new Parse.Configuration.Builder(this)

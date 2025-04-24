@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,12 +24,14 @@ import android.widget.Toast;
 import com.example.transporttimetable.R;
 import com.example.transporttimetable.helpers.DbHelper;
 import com.example.transporttimetable.helpers.RouteAdapter;
+import com.example.transporttimetable.helpers.RouteUploader;
 import com.example.transporttimetable.models.RouteModel;
 import com.example.transporttimetable.models.Station;
 import com.example.transporttimetable.models.Step;
 import com.example.transporttimetable.models.StopModel;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.parse.Parse;
+import com.parse.ParseObject;
 import com.yandex.mapkit.Animation;
 import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.MapKit;
@@ -44,6 +47,7 @@ import com.yandex.mapkit.map.CircleMapObject;
 import com.yandex.mapkit.map.MapObject;
 import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.MapObjectTapListener;
+import com.yandex.mapkit.map.PlacemarkMapObject;
 import com.yandex.mapkit.map.PolylineMapObject;
 import com.yandex.mapkit.mapview.MapView;
 import com.yandex.mapkit.search.Response;
@@ -51,16 +55,20 @@ import com.yandex.mapkit.search.SearchManager;
 import com.yandex.mapkit.traffic.TrafficLayer;
 import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.mapkit.transport.masstransit.FilterVehicleTypes;
+import com.yandex.mapkit.transport.masstransit.Flags;
 import com.yandex.mapkit.transport.masstransit.MasstransitRouter;
 import com.yandex.mapkit.transport.masstransit.Route;
+import com.yandex.mapkit.transport.masstransit.RouteStop;
 import com.yandex.mapkit.transport.masstransit.Section;
 import com.yandex.mapkit.transport.masstransit.SectionMetadata;
 import com.yandex.mapkit.transport.masstransit.Session;
+import com.yandex.mapkit.transport.masstransit.Stop;
 import com.yandex.mapkit.transport.masstransit.TimeOptions;
 import com.yandex.mapkit.transport.masstransit.TransitOptions;
 import com.yandex.mapkit.transport.masstransit.Transport;
 import com.yandex.mapkit.user_location.UserLocationLayer;
 import com.yandex.runtime.Error;
+import com.yandex.runtime.image.ImageProvider;
 import com.yandex.runtime.network.NetworkError;
 import com.yandex.runtime.network.RemoteError;
 import com.yandex.mapkit.search.*;
@@ -87,6 +95,11 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
     private final Point TARGET_LOCATION = new Point(48.010591, 37.838702);
     private SearchManager searchManager;
     private Session searchSession;
+    public String descrip = null;
+    public int ID_BUS = 0;
+    public int IDD = 0;
+    public String busNumber = null;
+    public Boolean Rev = false;
     private boolean fromRouteBuilding = false; // Флаг, вызван ли из RouteBuilding
     Station station = new Station();
     BottomSheetBehavior<View> bottomSheetBehavior;
@@ -199,7 +212,20 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
 
             }
         });
-
+        ArrayList<RequestPoint> points = new ArrayList<>();
+        TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
+        Point firstElement = new Point(47.987824, 37.798832);
+        Point lastElement = new Point(48.014351, 37.864835);
+        descrip = "ДС Центр - Герцена";
+        ID_BUS = 7;
+        IDD = 3;
+        Rev = false;
+        busNumber = "4";
+        points.add(new RequestPoint(new Point(firstElement.getLatitude(),
+                firstElement.getLongitude()),RequestPointType.WAYPOINT, ""));
+        points.add(new RequestPoint(new Point(lastElement.getLatitude(),
+                lastElement.getLongitude()), RequestPointType.WAYPOINT, ""));
+        // drivingSession = drivingRouter.requestRoutes(points,transitOptions,this);
     }
 
     @Override
@@ -441,17 +467,85 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
         mapview.onStart();
     }
 
+
+
     @Override
     public void onMasstransitRoutes(List<Route> routes) {
-        if (routes.size() > 0) {
-            for (Section section : routes.get(0).getSections()) {
-                drawSection(
-                        section.getMetadata().getData(),
-                        SubpolylineHelper.subpolyline(
-                                routes.get(0).getGeometry(), section.getGeometry()));
+        RouteUploader uploader = new RouteUploader(this);
+        if (routes.isEmpty()) {
+            Log.e("Route", "Маршруты не найдены");
+            return;
+        }
+
+        for (Route route : routes) {
+            boolean isBus4Found = false;
+
+            if(route.getMetadata().getWeight().getTransfersCount()==0){
+            for (Section section : route.getSections()) {
+                if (section.getMetadata().getData().getTransports() != null) {
+                    List<Transport> transports = section.getMetadata().getData().getTransports();
+                    com.yandex.mapkit.transport.masstransit.Line line = transports.get(0).getLine();
+                        String routeName = line.getName(); // или line.getRouteId()
+                        Log.e("Название автобуса","Название: " + routeName);
+                        if (busNumber.equals(routeName)) {
+                            Log.e("ВОШЛИ", "Проверка");
+                            isBus4Found = true;
+                            drawSection(
+                                    section.getMetadata().getData(),
+                                    SubpolylineHelper.subpolyline(route.getGeometry(), section.getGeometry())
+                            );
+                            List<RouteStop> stops = section.getStops();
+                            if (stops != null) {
+                                uploader.initializeStations(stops, () -> {
+                                    List<Integer> ids = uploader.getStationIdList();
+                                    String idStations = ids != null && !ids.isEmpty()
+                                            ? "," + TextUtils.join(",", ids) + ","
+                                            : null;
+
+                                    if (idStations == null) {
+                                        Log.e("Uploader", "IDs list is null or empty");
+                                        return;
+                                    }
+
+                                    Log.d("ROUTE_RESULT", "ID_STATIONS = " + idStations);
+
+                                    ParseObject routed = new ParseObject("Routes");
+                                    routed.put("ID", IDD);
+                                    routed.put("ID_STATIONS", idStations);
+                                    routed.put("Name", descrip);
+                                    routed.put("ID_BUS", ID_BUS);
+                                    routed.put("Reversed", Rev);
+                                    routed.put("Time", new String(new char[ids.size()]).replace('\0', ','));
+                                    // routed.saveInBackground();
+                                });
+                            }
+                        }
+                }
+
+            }
             }
         }
     }
+//    @Override
+//    public void onMasstransitRoutes(List<Route> routes) {
+//        if (routes.size() > 0) {
+//            for (Section section : routes.get(0).getSections()) {
+//                drawSection(
+//                        section.getMetadata().getData(),
+//                        SubpolylineHelper.subpolyline(
+//                                routes.get(0).getGeometry(), section.getGeometry()));
+//                // 👇 Здесь получаем остановки
+//                List<RouteStop> stops = section.getStops();
+//                if (stops != null) {
+//                    for (RouteStop stop : stops) {
+//                        String stopName = stop.getMetadata().getStop().getName(); // название остановки
+//                        Point coords = stop.getPosition(); // координаты остановки
+//                        Log.d("Stop", "Остановка: " + stopName + " / " + coords);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     @Override
     public void onMasstransitRoutesError(@NonNull Error error) {
