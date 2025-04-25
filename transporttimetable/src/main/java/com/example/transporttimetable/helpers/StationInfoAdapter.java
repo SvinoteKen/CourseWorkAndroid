@@ -20,11 +20,14 @@ public class StationInfoAdapter extends BaseAdapter {
 
     private final ArrayList<Bus> buses;
     private final String stationName;
+    Context context;
     private static LayoutInflater inflater = null;
     private final int stationId;
-    DbHelper dbHelper = new DbHelper();
+    DbHelper dbHelper;
     public StationInfoAdapter(Context context, ArrayList<Bus> buses, String stationName, int stationId) {
+        this.context = context;
         this.buses = buses;
+        dbHelper = new DbHelper(context);
         this.stationName = stationName;
         this.stationId = stationId;
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);

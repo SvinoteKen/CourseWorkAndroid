@@ -21,7 +21,6 @@ public class StationAdapter extends ArrayAdapter<Station> {
     Context context;
     private final ArrayList<Station> stations;
     LayoutInflater inflater;
-    DbHelper db = new DbHelper();
     private final Map<Integer, String> busRoutes;
     public StationAdapter(@NonNull Context context, ArrayList<Station> stations, Map<Integer, String> busRoutes) {
         super(context,0,stations);

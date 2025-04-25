@@ -1,14 +1,18 @@
 package com.example.transporttimetable.models;
 
+import java.util.List;
+
 public abstract class Step {
     public static class Walk extends Step {
     }
 
     public static class Bus extends Step {
         public String number;
+        public List<StopModel> stops;
 
-        public Bus(String number) {
+        public Bus(String number, List<StopModel> stops) {
             this.number = number;
+            this.stops = stops;
         }
     }
 

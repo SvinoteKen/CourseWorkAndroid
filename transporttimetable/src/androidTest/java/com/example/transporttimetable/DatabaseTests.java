@@ -51,7 +51,7 @@ public class DatabaseTests {
         initDB();
         // Создаем заглушку для объекта ParseQuery<ParseObject>
         ParseQuery<ParseObject> mockStationsQuery = Mockito.mock(ParseQuery.class);
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(appContext);
         // Создаем фиктивные данные для возвращения
         List<ParseObject> fakeResults = new ArrayList<>();
         ParseObject stationObject = new ParseObject("Stations");
@@ -75,7 +75,7 @@ public class DatabaseTests {
     @Test
     public void testGetAllBuses() throws ParseException {
         initDB();
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(appContext);
         // Создаем заглушку для объекта ParseQuery<ParseObject>
         ParseQuery<ParseObject> mockStationsQuery = Mockito.mock(ParseQuery.class);
         // Создаем фиктивные данные для возвращения
@@ -113,7 +113,7 @@ public class DatabaseTests {
     @Test
     public void testGetBusByStation() throws ParseException {
         initDB();
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(appContext);
         // Создаем заглушку для объекта ParseQuery<ParseObject>
         ParseQuery<ParseObject> mockStationsQuery = Mockito.mock(ParseQuery.class);
         // Создаем фиктивные данные для возвращения
@@ -139,7 +139,7 @@ public class DatabaseTests {
     @Test
     public void testGetBusesByStation() throws ParseException {
         initDB();
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(appContext);
         // Установка ожидаемого значения
         String expected = "14, 28";
         // Вызываем тестируемый метод
@@ -150,7 +150,7 @@ public class DatabaseTests {
     @Test
     public void testGetTimeByRoute() throws ParseException {
         initDB();
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(appContext);
         // Установка ожидаемого значения
         int expected = 9;
         // Вызываем тестируемый метод
@@ -161,7 +161,7 @@ public class DatabaseTests {
     @Test
     public void testGetRoutsByBus() throws ParseException {
         initDB();
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(appContext);
         // Создаем заглушку для объекта ParseQuery<ParseObject>
         ParseQuery<ParseObject> mockStationsQuery = Mockito.mock(ParseQuery.class);
         // Создаем фиктивные данные для возвращения
@@ -176,7 +176,7 @@ public class DatabaseTests {
         // Создаем заглушку для метода find() объекта mockStationsQuery
         when(mockStationsQuery.find()).thenReturn(fakeResults);
         // Вызываем тестируемый метод
-        ArrayList<Route> routes = dbHelper.getRoutsByBus(6);
+        ArrayList<Route> routes = dbHelper.getRoutesByBus(6);
         // Проверяем результаты
         // Проверяем результаты
         Assert.assertEquals(1, routes.size());
@@ -189,7 +189,7 @@ public class DatabaseTests {
     @Test
     public void testGetRoutByBus() throws ParseException {
         initDB();
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(appContext);
         // Создаем заглушку для объекта ParseQuery<ParseObject>
         ParseQuery<ParseObject> mockStationsQuery = Mockito.mock(ParseQuery.class);
         // Создаем фиктивные данные для возвращения

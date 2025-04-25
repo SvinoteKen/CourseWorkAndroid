@@ -20,12 +20,13 @@ public class BusAdapter extends ArrayAdapter<Bus> {
     Context context;
     private final ArrayList<Bus> buses;
     LayoutInflater inflater;
-    DbHelper db = new DbHelper();
+    DbHelper db;
 
     public BusAdapter(@NonNull Context context, ArrayList<Bus> buses) {
         super(context,0,buses);
         this.context = context;
         this.buses = buses;
+        db = new DbHelper(context);
         inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -59,7 +60,7 @@ public class BusAdapter extends ArrayAdapter<Bus> {
         }
         Bus bus = buses.get(position);
         int busId = bus.getId();
-        ArrayList<Route> routes = db.getRoutsByBus(busId);
+        ArrayList<Route> routes = db.getRoutesByBus(busId);
         if(routes.size() != 0){
         holder.busNumber.setText(bus.getBusNumber());
         holder.routeName.setText(routes.get(0).getName());}

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="32dp"
@@ -5,7 +6,8 @@
     android:background="@drawable/bus_background"
     android:gravity="center_vertical"
     android:paddingHorizontal="8dp"
-    android:layout_marginHorizontal="4dp">
+    android:layout_marginHorizontal="4dp"
+    android:elevation="2dp">
 
     <ImageView
         android:layout_width="20dp"
@@ -19,5 +21,6 @@
         android:layout_height="wrap_content"
         android:textColor="#000000"
         android:textSize="14sp"
-        android:paddingStart="4dp" />
+        android:paddingStart="4dp"
+        android:textStyle="bold" />
 </LinearLayout>

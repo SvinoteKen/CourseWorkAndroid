@@ -48,7 +48,7 @@ public class StationChooseActivity extends AppCompatActivity implements AdapterV
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(this);
         Parse.initialize(new Parse.Configuration.Builder(this)
                 .applicationId(getString(R.string.back4app_app_id))
                 .clientKey(getString(R.string.back4app_client_key))

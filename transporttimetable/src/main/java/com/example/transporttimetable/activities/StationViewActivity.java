@@ -45,7 +45,7 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
     ArrayList<Station> stations = null;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dbHelper = new DbHelper();
+        dbHelper = new DbHelper(this);
         Parse.initialize(new Parse.Configuration.Builder(this)
                 .applicationId(getString(R.string.back4app_app_id))
                 .clientKey(getString(R.string.back4app_client_key))
@@ -157,14 +157,15 @@ public class StationViewActivity extends AppCompatActivity implements AdapterVie
                 int stationId = station.getId();
                 if (wordsList.contains(station.getName()))
                 {
+                    buses = dbHelper.getBusesByStation(stationId,false);
+                    station.setReversed(false);
+                }
+                else{
                     buses = dbHelper.getBusesByStation(stationId,true);
                     station.setReversed(true);
                 }
-                else{
-                buses = dbHelper.getBusesByStation(stationId,false);
-                    station.setReversed(false);
-                }
                 wordsList.add(station.getName());
+                Log.e("Надо", "stationId: " + stationId + "Reversed: " + station.isReversed());
                 busRoutes.put(stationId, buses);
             }
 

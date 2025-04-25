@@ -241,16 +241,23 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
             GridView gridView = findViewById(R.id.routesGridView);
-            GridView stopsGridView = findViewById(R.id.stopsGridView);
             List<RouteModel> routes = new ArrayList<>();
 
             routes.add(new RouteModel(
                     "07:00–07:30 (30 мин, 10 остановок)",
                     Arrays.asList(
                             new Step.Walk(),
-                            new Step.Bus("3"),
+                            new Step.Bus("3", Arrays.asList(
+                                    new StopModel("Остановка 1", "07:05"),
+                                    new StopModel("Остановка 2", "07:10"),
+                                    new StopModel("Остановка 3", "07:15")
+                            )),
                             new Step.Transfer("13 мин"),
-                            new Step.Bus("49"),
+                            new Step.Bus("49", Arrays.asList(
+                                    new StopModel("Остановка 4", "07:20"),
+                                    new StopModel("Остановка 5", "07:25"),
+                                    new StopModel("Остановка 6", "07:30")
+                            )),
                             new Step.Walk()
                     )));
 
@@ -258,46 +265,21 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                     "07:10–07:40 (30 мин, 12 остановок)",
                     Arrays.asList(
                             new Step.Walk(),
-                            new Step.Bus("122"),
+                            new Step.Bus("122", Arrays.asList(
+                                    new StopModel("Остановка 7", "07:15"),
+                                    new StopModel("Остановка 8", "07:20"),
+                                    new StopModel("Остановка 9", "07:25"),
+                                    new StopModel("Остановка 10", "07:30")
+                            )),
                             new Step.Walk()
                     )));
 
-            RouteAdapter routeAdapter = new RouteAdapter(this, routes, stopsGridView);
+            RouteAdapter routeAdapter = new RouteAdapter(this, routes);
             gridView.setAdapter(routeAdapter);
             GridView routesGridView = findViewById(R.id.routesGridView);
             Button showAllButton = findViewById(R.id.showAllVariantsButton);
 
 
-            // обработка выбора маршрута
-            routesGridView.setOnItemClickListener((parent, view, position, id) -> {
-                RouteModel selectedRoute = routes.get(position);
-
-                // генерируем список остановок
-                List<StopModel> stops = new ArrayList<>();
-                stops.add(new StopModel("Парк Победы", "завтра 06:05"));
-                stops.add(new StopModel("8 остановок", ""));
-                // тут остановки развернутые:
-                stops.add(new StopModel("Колледж отраслевых технологий", "завтра 06:07"));
-                stops.add(new StopModel("КостромаЛадаСервис", "завтра 06:10"));
-                stops.add(new StopModel("ул. Октябрьская", "завтра 06:13"));
-                stops.add(new StopModel("мкр-н Черноречье", "завтра 06:15"));
-                stops.add(new StopModel("ул. Северной правды", "завтра 06:16"));
-                stops.add(new StopModel("КЦ Россия", "завтра 06:18"));
-                stops.add(new StopModel("пл. Конституции", "завтра 06:22"));
-
-
-                // показать остановки и кнопку
-                stopsGridView.setVisibility(View.VISIBLE);
-                showAllButton.setVisibility(View.VISIBLE);
-                routesGridView.setVisibility(View.GONE);
-            });
-
-            // обработка "Смотреть все варианты"
-            showAllButton.setOnClickListener(v -> {
-                stopsGridView.setVisibility(View.GONE);
-                showAllButton.setVisibility(View.GONE);
-                routesGridView.setVisibility(View.VISIBLE);
-            });
         }
         catch (NullPointerException e) {
             Log.e("Ошибка при обработке intent", "Ошибка при обработке intent: " + e.getMessage());
@@ -382,7 +364,7 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
             setMapZoom(TARGET_LOCATION,11.0f);
             int busId = (int) getIntent().getSerializableExtra("busId");
             boolean Reversed = (boolean) getIntent().getSerializableExtra("Reversed");
-            DbHelper dbHelper = new DbHelper();
+            DbHelper dbHelper = new DbHelper(this);
             ArrayList<Station> Stations = dbHelper.getRoutByBus(busId, Reversed);
             Collections.sort(Stations, Station.getIndexComparator());
             createTappableCircle(Stations);
@@ -469,83 +451,83 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
 
 
 
-    @Override
-    public void onMasstransitRoutes(List<Route> routes) {
-        RouteUploader uploader = new RouteUploader(this);
-        if (routes.isEmpty()) {
-            Log.e("Route", "Маршруты не найдены");
-            return;
-        }
-
-        for (Route route : routes) {
-            boolean isBus4Found = false;
-
-            if(route.getMetadata().getWeight().getTransfersCount()==0){
-            for (Section section : route.getSections()) {
-                if (section.getMetadata().getData().getTransports() != null) {
-                    List<Transport> transports = section.getMetadata().getData().getTransports();
-                    com.yandex.mapkit.transport.masstransit.Line line = transports.get(0).getLine();
-                        String routeName = line.getName(); // или line.getRouteId()
-                        Log.e("Название автобуса","Название: " + routeName);
-                        if (busNumber.equals(routeName)) {
-                            Log.e("ВОШЛИ", "Проверка");
-                            isBus4Found = true;
-                            drawSection(
-                                    section.getMetadata().getData(),
-                                    SubpolylineHelper.subpolyline(route.getGeometry(), section.getGeometry())
-                            );
-                            List<RouteStop> stops = section.getStops();
-                            if (stops != null) {
-                                uploader.initializeStations(stops, () -> {
-                                    List<Integer> ids = uploader.getStationIdList();
-                                    String idStations = ids != null && !ids.isEmpty()
-                                            ? "," + TextUtils.join(",", ids) + ","
-                                            : null;
-
-                                    if (idStations == null) {
-                                        Log.e("Uploader", "IDs list is null or empty");
-                                        return;
-                                    }
-
-                                    Log.d("ROUTE_RESULT", "ID_STATIONS = " + idStations);
-
-                                    ParseObject routed = new ParseObject("Routes");
-                                    routed.put("ID", IDD);
-                                    routed.put("ID_STATIONS", idStations);
-                                    routed.put("Name", descrip);
-                                    routed.put("ID_BUS", ID_BUS);
-                                    routed.put("Reversed", Rev);
-                                    routed.put("Time", new String(new char[ids.size()]).replace('\0', ','));
-                                    // routed.saveInBackground();
-                                });
-                            }
-                        }
-                }
-
-            }
-            }
-        }
-    }
 //    @Override
 //    public void onMasstransitRoutes(List<Route> routes) {
-//        if (routes.size() > 0) {
-//            for (Section section : routes.get(0).getSections()) {
-//                drawSection(
-//                        section.getMetadata().getData(),
-//                        SubpolylineHelper.subpolyline(
-//                                routes.get(0).getGeometry(), section.getGeometry()));
-//                // 👇 Здесь получаем остановки
-//                List<RouteStop> stops = section.getStops();
-//                if (stops != null) {
-//                    for (RouteStop stop : stops) {
-//                        String stopName = stop.getMetadata().getStop().getName(); // название остановки
-//                        Point coords = stop.getPosition(); // координаты остановки
-//                        Log.d("Stop", "Остановка: " + stopName + " / " + coords);
-//                    }
+//        RouteUploader uploader = new RouteUploader(this);
+//        if (routes.isEmpty()) {
+//            Log.e("Route", "Маршруты не найдены");
+//            return;
+//        }
+//
+//        for (Route route : routes) {
+//            boolean isBus4Found = false;
+//
+//            if(route.getMetadata().getWeight().getTransfersCount()==0){
+//            for (Section section : route.getSections()) {
+//                if (section.getMetadata().getData().getTransports() != null) {
+//                    List<Transport> transports = section.getMetadata().getData().getTransports();
+//                    com.yandex.mapkit.transport.masstransit.Line line = transports.get(0).getLine();
+//                        String routeName = line.getName(); // или line.getRouteId()
+//                        Log.e("Название автобуса","Название: " + routeName);
+//                        if (busNumber.equals(routeName)) {
+//                            Log.e("ВОШЛИ", "Проверка");
+//                            isBus4Found = true;
+//                            drawSection(
+//                                    section.getMetadata().getData(),
+//                                    SubpolylineHelper.subpolyline(route.getGeometry(), section.getGeometry())
+//                            );
+//                            List<RouteStop> stops = section.getStops();
+//                            if (stops != null) {
+//                                uploader.initializeStations(stops, () -> {
+//                                    List<Integer> ids = uploader.getStationIdList();
+//                                    String idStations = ids != null && !ids.isEmpty()
+//                                            ? "," + TextUtils.join(",", ids) + ","
+//                                            : null;
+//
+//                                    if (idStations == null) {
+//                                        Log.e("Uploader", "IDs list is null or empty");
+//                                        return;
+//                                    }
+//
+//                                    Log.d("ROUTE_RESULT", "ID_STATIONS = " + idStations);
+//
+//                                    ParseObject routed = new ParseObject("Routes");
+//                                    routed.put("ID", IDD);
+//                                    routed.put("ID_STATIONS", idStations);
+//                                    routed.put("Name", descrip);
+//                                    routed.put("ID_BUS", ID_BUS);
+//                                    routed.put("Reversed", Rev);
+//                                    routed.put("Time", new String(new char[ids.size()]).replace('\0', ','));
+//                                    // routed.saveInBackground();
+//                                });
+//                            }
+//                        }
 //                }
+//
+//            }
 //            }
 //        }
 //    }
+    @Override
+    public void onMasstransitRoutes(List<Route> routes) {
+        if (routes.size() > 0) {
+            for (Section section : routes.get(0).getSections()) {
+                drawSection(
+                        section.getMetadata().getData(),
+                        SubpolylineHelper.subpolyline(
+                                routes.get(0).getGeometry(), section.getGeometry()));
+                // 👇 Здесь получаем остановки
+                List<RouteStop> stops = section.getStops();
+                if (stops != null) {
+                    for (RouteStop stop : stops) {
+                        String stopName = stop.getMetadata().getStop().getName(); // название остановки
+                        Point coords = stop.getPosition(); // координаты остановки
+                        Log.d("Stop", "Остановка: " + stopName + " / " + coords);
+                    }
+                }
+            }
+        }
+    }
 
     @Override
     public void onMasstransitRoutesError(@NonNull Error error) {
