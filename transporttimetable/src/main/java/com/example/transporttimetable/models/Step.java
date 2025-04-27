@@ -8,11 +8,18 @@ public abstract class Step {
 
     public static class Bus extends Step {
         public String number;
-        public List<StopModel> stops;
+        public List<Integer> stops;
 
-        public Bus(String number, List<StopModel> stops) {
+        public Bus(String number, List<Integer> stops) {
             this.number = number;
             this.stops = stops;
+        }
+        public String getBusNumber() {
+            return number;
+        }
+
+        public List<Integer> getStations() {
+            return stops;
         }
     }
 

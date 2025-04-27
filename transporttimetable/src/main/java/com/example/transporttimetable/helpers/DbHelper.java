@@ -122,6 +122,9 @@ public class DbHelper{
     public ArrayList<Station> getStations() {
         return new ArrayList<>(stationList);
     }
+    public ArrayList<Route> getRoutes() {
+        return new ArrayList<>(routeList);
+    }
     public ArrayList<Station> searchStations(String name) {
         ArrayList<Station> result = new ArrayList<>();
         if (name == null) return result;

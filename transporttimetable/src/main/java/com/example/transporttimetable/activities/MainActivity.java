@@ -5,8 +5,15 @@ import android.os.Bundle;
 
 import com.example.transporttimetable.R;
 import com.example.transporttimetable.helpers.DbFetcher;
+import com.example.transporttimetable.helpers.DbHelper;
+import com.example.transporttimetable.models.FoundRoute;
+import com.example.transporttimetable.models.Station;
+import com.example.transporttimetable.routes_finders.RouteFinder;
 import com.parse.Parse;
 import com.yandex.mapkit.MapKitFactory;
+import com.yandex.mapkit.RequestPoint;
+import com.yandex.mapkit.RequestPointType;
+import com.yandex.mapkit.geometry.Point;
 import com.yandex.runtime.i18n.I18nManagerFactory;
 
 import android.app.Activity;
@@ -16,6 +23,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.LocationManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -23,6 +31,8 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
@@ -50,7 +60,7 @@ public class MainActivity extends Activity {
         Locale locale = new Locale("ru_RU");
         Locale.setDefault(locale);
         MapKitFactory.setLocale("ru_RU");
-        MapKitFactory.setApiKey("43cc20bb-8e7f-4168-a3c0-910cd451d895");
+        MapKitFactory.setApiKey("d2e547f0-6e63-4f93-9ebe-08bc3a8c3757");
         showPhoneStatePermission();
         LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -112,7 +122,6 @@ public class MainActivity extends Activity {
                 finish();
             }
         });
-
     }
 
     private void showPhoneStatePermission() {

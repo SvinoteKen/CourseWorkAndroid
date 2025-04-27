@@ -25,10 +25,12 @@ import com.example.transporttimetable.R;
 import com.example.transporttimetable.helpers.DbHelper;
 import com.example.transporttimetable.helpers.RouteAdapter;
 import com.example.transporttimetable.helpers.RouteUploader;
+import com.example.transporttimetable.models.FoundRoute;
 import com.example.transporttimetable.models.RouteModel;
 import com.example.transporttimetable.models.Station;
 import com.example.transporttimetable.models.Step;
 import com.example.transporttimetable.models.StopModel;
+import com.example.transporttimetable.routes_finders.RouteFinder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.parse.Parse;
 import com.parse.ParseObject;
@@ -57,12 +59,15 @@ import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.mapkit.transport.masstransit.FilterVehicleTypes;
 import com.yandex.mapkit.transport.masstransit.Flags;
 import com.yandex.mapkit.transport.masstransit.MasstransitRouter;
+import com.yandex.mapkit.transport.masstransit.PedestrianRouter;
 import com.yandex.mapkit.transport.masstransit.Route;
 import com.yandex.mapkit.transport.masstransit.RouteStop;
 import com.yandex.mapkit.transport.masstransit.Section;
 import com.yandex.mapkit.transport.masstransit.SectionMetadata;
 import com.yandex.mapkit.transport.masstransit.Session;
 import com.yandex.mapkit.transport.masstransit.Stop;
+import com.yandex.mapkit.transport.masstransit.Summary;
+import com.yandex.mapkit.transport.masstransit.SummarySession;
 import com.yandex.mapkit.transport.masstransit.TimeOptions;
 import com.yandex.mapkit.transport.masstransit.TransitOptions;
 import com.yandex.mapkit.transport.masstransit.Transport;
@@ -214,8 +219,8 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
         });
         ArrayList<RequestPoint> points = new ArrayList<>();
         TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
-        Point firstElement = new Point(47.987824, 37.798832);
-        Point lastElement = new Point(48.014351, 37.864835);
+        Point firstElement = new Point(48.063442, 37.772343);
+        Point lastElement = new Point(48.013572, 37.865598);
         descrip = "ДС Центр - Герцена";
         ID_BUS = 7;
         IDD = 3;
@@ -226,6 +231,53 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
         points.add(new RequestPoint(new Point(lastElement.getLatitude(),
                 lastElement.getLongitude()), RequestPointType.WAYPOINT, ""));
         // drivingSession = drivingRouter.requestRoutes(points,transitOptions,this);
+        DbHelper db = new DbHelper(this);
+        List<Station> stations = db.getStations();
+        List<com.example.transporttimetable.models.Route> routes = db.getRoutes();
+        RouteFinder rf = new RouteFinder(this, stations, routes);
+        rf.findRoutes(firstElement, lastElement, new RouteFinder.RouteCallback() {
+            @Override
+            public void onRoutesFound(List<FoundRoute> routes) {
+                // Здесь обработка результата
+                if (routes.isEmpty()) {
+                    Log.e("RouteFinder", "Маршруты не найдены");
+                } else {
+                    for (FoundRoute route : routes) {
+                        // Логируем общую информацию о маршруте
+                        Log.e("RouteFinder", "=== Новый FoundRoute ===");
+                        Log.e("RouteFinder", "TotalTime (мин): " + route.getTotalTime());
+                        Log.e("RouteFinder", "Number of parts: " + route.parts.size());
+
+                        // Пробегаемся по каждому шагу
+                        for (int i = 0; i < route.parts.size(); i++) {
+                            Step step = route.parts.get(i);
+                            if (step instanceof Step.Walk) {
+                                Log.e("RouteFinder", String.format(
+                                        "Part %d: WALK (пешком)", i
+                                ));
+                            }
+                            else if (step instanceof Step.Bus) {
+                                Step.Bus bus = (Step.Bus) step;
+                                Log.e("RouteFinder", String.format(
+                                        "Part %d: BUS №%s, stops IDs = %s",
+                                        i,
+                                        bus.getBusNumber(),
+                                        bus.getStations().toString()
+                                ));
+                            }
+                            else if (step instanceof Step.Transfer) {
+                                Step.Transfer tr = (Step.Transfer) step;
+                                Log.e("RouteFinder", String.format(
+                                        "Part %d: TRANSFER, wait time = %s",
+                                        i,
+                                        tr.time
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -241,41 +293,41 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
             GridView gridView = findViewById(R.id.routesGridView);
-            List<RouteModel> routes = new ArrayList<>();
-
-            routes.add(new RouteModel(
-                    "07:00–07:30 (30 мин, 10 остановок)",
-                    Arrays.asList(
-                            new Step.Walk(),
-                            new Step.Bus("3", Arrays.asList(
-                                    new StopModel("Остановка 1", "07:05"),
-                                    new StopModel("Остановка 2", "07:10"),
-                                    new StopModel("Остановка 3", "07:15")
-                            )),
-                            new Step.Transfer("13 мин"),
-                            new Step.Bus("49", Arrays.asList(
-                                    new StopModel("Остановка 4", "07:20"),
-                                    new StopModel("Остановка 5", "07:25"),
-                                    new StopModel("Остановка 6", "07:30")
-                            )),
-                            new Step.Walk()
-                    )));
-
-            routes.add(new RouteModel(
-                    "07:10–07:40 (30 мин, 12 остановок)",
-                    Arrays.asList(
-                            new Step.Walk(),
-                            new Step.Bus("122", Arrays.asList(
-                                    new StopModel("Остановка 7", "07:15"),
-                                    new StopModel("Остановка 8", "07:20"),
-                                    new StopModel("Остановка 9", "07:25"),
-                                    new StopModel("Остановка 10", "07:30")
-                            )),
-                            new Step.Walk()
-                    )));
-
-            RouteAdapter routeAdapter = new RouteAdapter(this, routes);
-            gridView.setAdapter(routeAdapter);
+//            List<RouteModel> routes = new ArrayList<>();
+//
+//            routes.add(new RouteModel(
+//                    "07:00–07:30 (30 мин, 10 остановок)",
+//                    Arrays.asList(
+//                            new Step.Walk(),
+//                            new Step.Bus("3", Arrays.asList(
+//                                    new StopModel(1,"Остановка 1", "07:05"),
+//                                    new StopModel(2,"Остановка 2", "07:10"),
+//                                    new StopModel(3, "Остановка 3", "07:15")
+//                            )),
+//                            new Step.Transfer("13 мин"),
+//                            new Step.Bus("49", Arrays.asList(
+//                                    new StopModel(4,"Остановка 4", "07:20"),
+//                                    new StopModel(5,"Остановка 5", "07:25"),
+//                                    new StopModel(6,"Остановка 6", "07:30")
+//                            )),
+//                            new Step.Walk()
+//                    )));
+//
+//            routes.add(new RouteModel(
+//                    "07:10–07:40 (30 мин, 12 остановок)",
+//                    Arrays.asList(
+//                            new Step.Walk(),
+//                            new Step.Bus("122", Arrays.asList(
+//                                    new StopModel(1,"Остановка 7", "07:15"),
+//                                    new StopModel(2,"Остановка 8", "07:20"),
+//                                    new StopModel(3,"Остановка 9", "07:25"),
+//                                    new StopModel(4,"Остановка 10", "07:30")
+//                            )),
+//                            new Step.Walk()
+//                    )));
+//
+//            RouteAdapter routeAdapter = new RouteAdapter(this, routes);
+//            gridView.setAdapter(routeAdapter);
             GridView routesGridView = findViewById(R.id.routesGridView);
             Button showAllButton = findViewById(R.id.showAllVariantsButton);
 
