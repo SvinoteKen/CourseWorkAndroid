@@ -14,6 +14,7 @@ import com.example.transporttimetable.models.Step;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
 import com.yandex.mapkit.RequestPointType;
+import com.yandex.mapkit.geometry.Geo;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.mapkit.transport.masstransit.PedestrianRouter;
@@ -23,15 +24,24 @@ import com.yandex.mapkit.transport.masstransit.SummarySession;
 import com.yandex.mapkit.transport.masstransit.TimeOptions;
 import com.yandex.runtime.Error;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import ai.onnxruntime.OnnxTensor;
+import ai.onnxruntime.OrtEnvironment;
+import ai.onnxruntime.OrtSession;
 
 public class RouteFinder {
 
@@ -42,11 +52,88 @@ public class RouteFinder {
     private Context context;
     private List<Station> allStations;
     private List<Route> allRoutes;
-
+    private OrtEnvironment env;
+    private OrtSession session;
     public RouteFinder(Context context, List<Station> allStations, List<Route> allRoutes) {
         this.context = context;
         this.allStations = allStations;
         this.allRoutes = allRoutes;
+        try {
+            env = OrtEnvironment.getEnvironment();
+            session = env.createSession(copyAssetToFile(context, "bus_time_predictor.onnx").getAbsolutePath(),
+                    new OrtSession.SessionOptions());
+        } catch (Exception e) {
+            Log.e(TAG, "Ошибка при инициализации ONNX модели", e);
+        }
+    }
+    private File copyAssetToFile(Context context, String filename) throws Exception {
+        File outFile = new File(context.getFilesDir(), filename);
+        if (!outFile.exists()) {
+            InputStream is = context.getAssets().open(filename);
+            FileOutputStream os = new FileOutputStream(outFile);
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                os.write(buffer, 0, read);
+            }
+            is.close();
+            os.close();
+        }
+        return outFile;
+    }
+
+    public List<Integer> predictTimes(List<Float> baseTimes, List<Integer> distances, int dayOfWeek, int hour,
+                                      int isPeak, int weather, int traffic, int season, float targetTotalTime) {
+        try {
+            int n = baseTimes.size();
+            float[][] inputData = new float[n][8];
+
+            Log.d(TAG, "===== ВХОДНЫЕ ДАННЫЕ В МОДЕЛЬ =====");
+            for (int i = 0; i < n; i++) {
+                inputData[i][0] = season;
+                inputData[i][1] = dayOfWeek;
+                inputData[i][2] = hour;
+                inputData[i][3] = baseTimes.get(i);
+                inputData[i][4] = traffic;
+                inputData[i][5] = weather;
+                inputData[i][6] = isPeak;
+                inputData[i][7] = distances.get(i); // добавлено расстояние
+
+                Log.d(TAG, String.format("Input #%d: season=%d, day=%d, hour=%d, base=%.2f, traffic=%d, weather=%d, isPeak=%d, dist=%d",
+                        i, season, dayOfWeek, hour, baseTimes.get(i), traffic, weather, isPeak, distances.get(i)));
+            }
+
+            OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputData);
+            Map<String, OnnxTensor> inputs = new HashMap<>();
+            inputs.put(session.getInputNames().iterator().next(), inputTensor);
+
+            OrtSession.Result results = session.run(inputs);
+            float[][] output = (float[][]) results.get(0).getValue();
+
+            Log.d(TAG, "===== ПОЛУЧЕННОЕ ВРЕМЯ ОТ МОДЕЛИ =====");
+            List<Float> rawTimes = new ArrayList<>();
+            float predictedTotal = 0f;
+
+            for (int i = 0; i < n; i++) {
+                float t = output[i][0];
+                rawTimes.add(t);
+                predictedTotal += t;
+                Log.d(TAG, String.format("Segment #%d: predictedTime=%.2f", i, t));
+            }
+
+            List<Integer> finalTimes = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                int finalTime = Math.round(rawTimes.get(i));
+                finalTimes.add(finalTime);
+                Log.d(TAG, String.format("Финальное время #%d: %.2f = %d", i, rawTimes.get(i), finalTime));
+            }
+
+            return finalTimes;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Ошибка при предсказании времени", e);
+            return Collections.emptyList();
+        }
     }
 
     public void findRoutes(Point pointA, Point pointB, RouteCallback callback) {
@@ -239,24 +326,60 @@ public class RouteFinder {
         Log.e("RouteFinder", "convertToSteps: steps size=" + steps.size());
         return steps;
     }
+    private List<Float> parseTimeIntervals(String timeStr) {
+        List<Float> times = new ArrayList<>();
+        if (timeStr == null || timeStr.isEmpty()) return times;
 
+        String[] parts = timeStr.split(",");
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                try {
+                    times.add(Float.parseFloat(part.trim()));
+                } catch (NumberFormatException e) {
+                    Log.e("RouteFinder", "Ошибка парсинга времени: " + part);
+                }
+            }
+        }
+        return times;
+    }
     private Map<Station, List<Edge>> buildGraph() {
         Log.e("RouteFinder", "buildGraph: Start");
         Map<Station, List<Edge>> graph = new HashMap<>();
 
+        // параметры для модели
+        int dayOfWeek = getCurrentDayOfWeek(); // 0 - пн, 6 - вс
+        int hour = getCurrentHour();
+        int isPeak = isPeakHour(hour) ? 1 : 0;
+        int weather = getWeatherCode(); // заглушка или из API
+        int traffic = getTrafficLevel(); // заглушка или API
+        int season = getSeason();
+
         for (Route route : allRoutes) {
             List<Integer> stationIds = parseStationIds(route.getStop());
-            Log.e("RouteFinder", "buildGraph: Route bus=" + route.getBus() + ", stations=" + stationIds);
+            List<Float> baseTimes = parseTimeIntervals(route.getTime());
+            List<Integer> distances = parseStationIds(route.getDistance());
+            if (baseTimes.size() != stationIds.size() - 1) {
+                Log.e("RouteFinder", "Пропуск маршрута " + route.getBus() + ": некорректные данные " + stationIds.size() + "  Время: " + baseTimes.size() + " Остановок: " + stationIds.size());
+                continue;
+            }
+
+            float totalTime = baseTimes.stream().reduce(0f, Float::sum);
+            // получить прогнозируемое время
+            List<Integer> predictedTimes = predictTimes(baseTimes,distances, dayOfWeek, hour, isPeak, weather, traffic, season, totalTime);
 
             for (int i = 0; i < stationIds.size() - 1; i++) {
                 Station fromStation = findStationById(stationIds.get(i));
                 Station toStation = findStationById(stationIds.get(i + 1));
 
                 if (fromStation == null || toStation == null) continue;
+                float originalTime = baseTimes.get(i);
 
-                int time = 2; // всегда 2 минуты между соседними остановками
+                int predictedTime  = predictedTimes.get(i);
+                Log.d("RouteFinder", "Маршрут " + route.getBus() + ": " +
+                        fromStation.getName() + " → " + toStation.getName() +
+                        " | базовое: " + originalTime + " мин → предсказано: " + predictedTime + " мин");
                 graph.computeIfAbsent(fromStation, k -> new ArrayList<>())
-                        .add(new Edge(toStation, time, route.getBus()));
+                        .add(new Edge(toStation, predictedTime, route.getBus()));
             }
         }
 
@@ -282,7 +405,35 @@ public class RouteFinder {
 
         return graph;
     }
+    private int getCurrentDayOfWeek() {
+        Calendar calendar = Calendar.getInstance();
+        int day = calendar.get(Calendar.DAY_OF_WEEK); // Sunday=1, Saturday=7
+        return (day + 5) % 7 + 1; // Преобразуем: Sunday=6, Monday=0
+    }
 
+    private int getCurrentHour() {
+        return Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+    }
+
+    private boolean isPeakHour(int hour) {
+        return (hour >= 7 && hour <= 9) || (hour >= 12 && hour <= 13)|| (hour >= 17 && hour <= 19);
+    }
+
+    private int getWeatherCode() {
+        return 0; // заглушка, позже можно подставить код из погодного API
+    }
+
+    private int getTrafficLevel() {
+        return 1; // заглушка — можно внедрить позже
+    }
+
+    private int getSeason() {
+        int month = Calendar.getInstance().get(Calendar.MONTH); // 0=Jan
+        if (month >= 2 && month <= 4) return 2; // Весна
+        if (month >= 5 && month <= 7) return 3; // Лето
+        if (month >= 8 && month <= 10) return 4; // Осень
+        return 1; // Зима
+    }
     private List<Integer> parseStationIds(String stationsString) {
         List<Integer> stationIds = new ArrayList<>();
         String[] parts = stationsString.split(",");
@@ -311,38 +462,49 @@ public class RouteFinder {
             return;
         }
 
-        List<Station> nearest = new ArrayList<>();
-        // Начинаем с 0-й станции
-        processNextStation(0, location, nearest, callback);
-    }
+        List<Station> withinRadius = new ArrayList<>();
+        for (Station st : allStations) {
+            double dist = Geo.distance(location,
+                    st.getCoordinates());
+            if (dist <= 250) {
+                withinRadius.add(st);
+                Log.e(TAG, "findNearestStations: → added station #" + st.getId());
+            }
+        }
 
-    private void processNextStation(int index,
-                                    Point location,
-                                    List<Station> nearest,
-                                    NearestStationsResult callback) {
-        if (index >= allStations.size()) {
-            // Все станции обработаны
-            //Log.e(TAG, "findNearestStations: DONE, found " + nearest.size());
-            callback.onStationsFound(new ArrayList<>(nearest));
+        if (withinRadius.isEmpty()) {
+            Log.e(TAG, "findNearestStations: no stations within 100m → return empty");
+            callback.onStationsFound(Collections.emptyList());
             return;
         }
 
-        Station st = allStations.get(index);
-        //Log.e(TAG, "findNearestStations: checking station #" + st.getId()+ " \"" + st.getName() + "\" at " + formatPoint(st.getCoordinates()));
+        List<Station> nearest = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(withinRadius.size());
 
-        // Оцениваем пеший путь к этой станции
-        estimateWalkTime(location, st.getCoordinates(), minutes -> {
-            //Log.e(TAG, "findNearestStations: station #" + st.getId()+ " walkTime=" + minutes + " min");
-            if (minutes <= MAX_WALK_TIME_MINUTES) {
-                nearest.add(st);
-                Log.e(TAG, "findNearestStations: → added station #" + st.getId());
+        for (Station st : withinRadius) {
+            estimateWalkTime(location, st.getCoordinates(), minutes -> {
+                if (minutes <= MAX_WALK_TIME_MINUTES) {
+                    synchronized (nearest) {
+                        nearest.add(st);
+                    }
+                }
+                latch.countDown();
+            });
+        }
+
+        new Thread(() -> {
+            try {
+                latch.await();
+                new Handler(Looper.getMainLooper()).post(() ->
+                        callback.onStationsFound(new ArrayList<>(nearest))
+                );
+            } catch (InterruptedException e) {
+                Log.e(TAG, "findNearestStations: interrupted", e);
+                new Handler(Looper.getMainLooper()).post(() ->
+                        callback.onStationsFound(Collections.emptyList())
+                );
             }
-            // Немного подождём (опционально, чтобы не давить на API)
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                // Рекурсивно переходим к следующей станции
-                processNextStation(index + 1, location, nearest, callback);
-            }, 200); // задержка 200 мс между запросами
-        });
+        }).start();
     }
 
     private void estimateWalkTime(Point from, Point to, EstimateCallback callback) {

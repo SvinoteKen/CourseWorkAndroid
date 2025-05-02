@@ -100,6 +100,7 @@ public class DbHelper{
                 r.setStop(obj.getString("stations"));
                 r.setTime(obj.optString("time", ""));
                 r.setReversed(obj.optBoolean("reversed", false));
+                r.setDistance(obj.getString("distance"));
                 result.add(r);
             }
         } catch (Exception e) {
@@ -195,7 +196,7 @@ public class DbHelper{
 
     public int getTimeByRoute(int idBus, int idStation) {
         for (Route route : routeList) {
-            if (route.getBus() == idBus && !route.getReversed()) {
+            if (route.getBus() == idBus) {
                 String[] idArray = route.getStop().split(",");
                 String[] timeArray = route.getTime().split(",");
 
@@ -251,7 +252,33 @@ public class DbHelper{
                 break;
             }
         }
+        return result;
+    }
+    public ArrayList<Station> getRoutByBus(int busId) {
+        ArrayList<Station> result = new ArrayList<>();
 
+        for (Route route : routeList) {
+            if (route.getBus() == busId) {
+                String[] idArray = route.getStop().split(",");
+                List<Integer> stationIds = new ArrayList<>();
+                for (int i = 1; i < idArray.length; i++) {
+                    stationIds.add(Integer.parseInt(idArray[i]));
+                }
+
+                for (int i = 0; i < stationIds.size(); i++) {
+                    int id = stationIds.get(i);
+                    for (Station s : stationList) {
+                        if (s.getId() == id) {
+                            Station copy = new Station(s.getId(), s.getName(), s.getCoordinates());
+                            copy.setIndex(i);
+                            result.add(copy);
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+        }
         return result;
     }
 }

@@ -30,7 +30,7 @@ public class DbFetcher {
     }
 
     public void fetchAllDataFromDB(Runnable onComplete) {
-        //fetchAllStations(() -> fetchAllBuses(() -> fetchAllRoutes(onComplete)));
+        fetchAllStations(() -> fetchAllBuses(() -> fetchAllRoutes(onComplete)));
     }
     private void fetchAllStations(Runnable next) {
         localStations.clear();
@@ -110,8 +110,8 @@ public class DbFetcher {
                     String stationIds = obj.getString("ID_STATIONS");
                     String time = obj.getString("Time");
                     boolean reversed = obj.getBoolean("Reversed");
-
-                    localRoutes.add(new RouteRecord(id, name, busId, stationIds, time, reversed));
+                    String distance = obj.getString("Distance");
+                    localRoutes.add(new RouteRecord(id, name, busId, stationIds, time, reversed, distance));
                 }
                 fetchRouteBatch(startId + batchSize, batchSize, onComplete);
             } else {
@@ -177,6 +177,7 @@ public class DbFetcher {
                 obj.put("stations", r.stationIds);
                 obj.put("time", r.time);
                 obj.put("reversed", r.reversed);
+                obj.put("distance", r.distance);
                 jsonArray.put(obj);
             } catch (JSONException e) {
                 Log.e("RouteSave", "Ошибка сериализации JSON", e);
@@ -215,14 +216,16 @@ public class DbFetcher {
         public String stationIds;
         public String time;
         public boolean reversed;
+        public String distance;
 
-        public RouteRecord(int id, String name, int busId, String stationIds, String time, boolean reversed) {
+        public RouteRecord(int id, String name, int busId, String stationIds, String time, boolean reversed, String distance) {
             this.id = id;
             this.name = name;
             this.busId = busId;
             this.stationIds = stationIds;
             this.time = time;
             this.reversed = reversed;
+            this.distance = distance;
         }
     }
     public class StationRecord {

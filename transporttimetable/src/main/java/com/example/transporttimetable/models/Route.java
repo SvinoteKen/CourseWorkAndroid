@@ -14,6 +14,8 @@ public class Route {
 
     private String Time;
 
+    private String Distance;
+
     public Route() {
     }
 
@@ -23,6 +25,14 @@ public class Route {
         this.Name = Name;
         this.Reversed = Reversed;
         this.Time = Time;
+    }
+
+    public String getDistance() {
+        return Distance;
+    }
+
+    public void setDistance(String distance) {
+        this.Distance = distance;
     }
 
     public int getId() {
