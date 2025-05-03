@@ -7,11 +7,13 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.transporttimetable.helpers.DbHelper;
+import com.example.transporttimetable.models.Bus;
 import com.example.transporttimetable.models.FoundRoute;
 import com.example.transporttimetable.models.Route;
 import com.example.transporttimetable.models.Station;
 import com.example.transporttimetable.models.Step;
-import com.yandex.mapkit.MapKitFactory;
+import com.example.transporttimetable.models.StopModel;
 import com.yandex.mapkit.RequestPoint;
 import com.yandex.mapkit.RequestPointType;
 import com.yandex.mapkit.geometry.Geo;
@@ -19,8 +21,6 @@ import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.mapkit.transport.masstransit.PedestrianRouter;
 import com.yandex.mapkit.transport.masstransit.Session;
-import com.yandex.mapkit.transport.masstransit.Summary;
-import com.yandex.mapkit.transport.masstransit.SummarySession;
 import com.yandex.mapkit.transport.masstransit.TimeOptions;
 import com.yandex.runtime.Error;
 
@@ -33,11 +33,12 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OrtEnvironment;
@@ -54,10 +55,13 @@ public class RouteFinder {
     private List<Route> allRoutes;
     private OrtEnvironment env;
     private OrtSession session;
+    DbHelper db;
+    private final Map<Integer, List<Integer>> routeTimeMap = new HashMap<>();
     public RouteFinder(Context context, List<Station> allStations, List<Route> allRoutes) {
         this.context = context;
         this.allStations = allStations;
         this.allRoutes = allRoutes;
+        db = new DbHelper(context);
         try {
             env = OrtEnvironment.getEnvironment();
             session = env.createSession(copyAssetToFile(context, "bus_time_predictor.onnx").getAbsolutePath(),
@@ -83,7 +87,7 @@ public class RouteFinder {
     }
 
     public List<Integer> predictTimes(List<Float> baseTimes, List<Integer> distances, int dayOfWeek, int hour,
-                                      int isPeak, int weather, int traffic, int season, float targetTotalTime) {
+                                      int isPeak, int weather, int traffic, int season) {
         try {
             int n = baseTimes.size();
             float[][] inputData = new float[n][8];
@@ -203,13 +207,65 @@ public class RouteFinder {
         Map<Integer, Integer> visited = new HashMap<>();
 
         List<RouteStepInternal> initialSteps = new ArrayList<>();
-        initialSteps.add(new RouteStepInternal(RouteStepInternal.Type.WALK, null, new ArrayList<>()));
+        initialSteps.add(new RouteStepInternal(RouteStepInternal.Type.WALK, walkTimeStart));
 
         queue.add(new PathNode(startStation, initialSteps, walkTimeStart, 0));
 
         processQueue(queue, visited, graph, endStations, endPoint, callback);
     }
+    private int computeWaitTime(Bus bus, int stationId, int fromStationId, int currentTime) {
+        int first = timeToMinutes(bus.getFirstDeparture());
+        int last = timeToMinutes(bus.getLastDeparture());
+        int interval = Integer.parseInt(bus.getInterval());
 
+        // Получаем кумулятивное идеальное время от fromStationId до stationId
+        int offset = getCumulativePredictedTime(bus.getId(), stationId) - getCumulativePredictedTime(bus.getId(), fromStationId);
+
+        if (offset < 0) return Integer.MAX_VALUE; // ошибка, нет такого маршрута
+
+        if (currentTime > last + offset) {
+            return Integer.MAX_VALUE; // Автобусы уже не ходят
+        }
+
+        if (currentTime <= first + offset) {
+            return (first + offset) - currentTime;
+        }
+
+        int nextDeparture = ((currentTime - first - offset + interval - 1) / interval) * interval + first + offset;
+        int newHours = nextDeparture / 60;
+        int newMinutes = nextDeparture % 60;
+        String newTime = String.format("%d:%02d", newHours, newMinutes);
+        Log.e(TAG,"Время: " + newTime);
+        if (nextDeparture > last + offset) {
+            return Integer.MAX_VALUE;
+        }
+
+        return nextDeparture - currentTime;
+    }
+
+    // Метод для конвертации времени в формате HH:mm в минуты от начала суток
+    private int timeToMinutes(String time) {
+        String[] parts = time.split(":");
+        int hours = Integer.parseInt(parts[0]);
+        int minutes = Integer.parseInt(parts[1]);
+        return hours * 60 + minutes;
+    }
+
+    private Bus findBusByNumber(int number) {
+        ArrayList<Bus> buses = db.getBuses();
+        for (Bus b : buses) {
+            if (b.getId() == number) return b;
+        }
+        return null;
+    }
+
+    private int getCurrentTimeOfDayInMinutes() {
+        //java.time.LocalTime now = java.time.LocalTime.now();
+        int h = 14;
+        int m = 45;
+        //return now.getHour() * 60 + now.getMinute();
+        return h * 60 + 50;
+    }
     private void processQueue(PriorityQueue<PathNode> queue, Map<Integer, Integer> visited,
                               Map<Station, List<Edge>> graph, List<Station> endStations,
                               Point endPoint, DijkstraResultCallback callback) {
@@ -240,7 +296,7 @@ public class RouteFinder {
 
                 if (walkTimeEnd <= MAX_WALK_TIME_MINUTES) {
                     List<Step> finalSteps = convertToSteps(current.steps);
-                    finalSteps.add(new Step.Walk());
+                    finalSteps.add(new Step.Walk(String.valueOf(walkTimeEnd)));
                     FoundRoute foundRoute = new FoundRoute(finalSteps, current.totalTime + walkTimeEnd);
                     Log.e(TAG, "processQueue: Found a valid route with total time=" + foundRoute.getTotalTime());
                     callback.onResult(foundRoute);
@@ -273,20 +329,66 @@ public class RouteFinder {
             List<RouteStepInternal> newSteps = new ArrayList<>(current.steps);
             int newTransfers = current.transfers;
             boolean isSameBus = lastBusNumber != null && lastBusNumber.equals(String.valueOf(edge.busNumber));
+            int cumCurrent = getCumulativePredictedTime(edge.busNumber, current.station.getId());
+            int cumNext = getCumulativePredictedTime(edge.busNumber, edge.to.getId());
+            Log.e(TAG, "   Cumulative times on bus=" + edge.busNumber
+                    + " from=" + cumCurrent + " to=" + cumNext);
 
+            if (cumCurrent < 0 || cumNext < cumCurrent) {
+                Log.e(TAG, "   Invalid cumulative times, skipping");
+                continue;
+            }
+
+            int ride = cumNext - cumCurrent;
+            int arrivalTotal;
+            int wait = 0;
             if (isSameBus) {
                 // Едем дальше на том же автобусе — просто добавляем остановку
                 RouteStepInternal lastStep = newSteps.get(newSteps.size() - 1);
-                lastStep.stations.add(edge.to.getId());
-            } else {
-                // ПЕРЕСАДКА только если пересадка возможна
-                if (lastBusNumber != null) {
-                    // Добавляем шаг пересадки
-                    newSteps.add(new RouteStepInternal(RouteStepInternal.Type.TRANSFER, null, null));
+                Integer prevTime = lastStep.stations.get(current.station.getId());
+                if (prevTime == null) {
+                    Log.e(TAG, "   Previous time not found in lastStep for station id=" + current.station.getId());
+                    continue;
                 }
-                // И новый автобусный шаг
-                RouteStepInternal newBusStep = new RouteStepInternal(RouteStepInternal.Type.BUS, String.valueOf(edge.busNumber), new ArrayList<>());
-                newBusStep.stations.add(edge.to.getId());
+                arrivalTotal = prevTime + ride;
+                lastStep.stations.put(edge.to.getId(), arrivalTotal);
+            } else {// Новый автобус — считаем ожидание
+                // Новый автобус — считаем ожидание
+                int nowOfDay = getCurrentTimeOfDayInMinutes() + current.totalTime;
+                int newHours = nowOfDay / 60;
+                int newMinutes = nowOfDay % 60;
+                String newTime = String.format("%d:%02d", newHours, newMinutes);
+                Log.e(TAG, "   nowOfDay=" + newTime + " (currentTime + totalTime)");
+
+                ArrayList<Station> st = db.getRoutByBus(edge.busNumber);
+                Bus bus = findBusByNumber(edge.busNumber);
+                wait = computeWaitTime(bus, current.station.getId(), st.get(0).getId(), nowOfDay);
+                Log.e(TAG, "   wait=" + wait);
+                if (wait == Integer.MAX_VALUE) {
+                    Log.e(TAG, "   No available buses today, skipping edge");
+                    continue;
+                }
+
+                // ⬇️ Исправление: получаем реальное время последней остановки
+                int transferStartTime = 0;
+                if (!newSteps.isEmpty()) {
+                    for (int i = newSteps.size() - 1; i >= 0; i--) {
+                        RouteStepInternal step = newSteps.get(i);
+                        if (step.type == RouteStepInternal.Type.BUS && step.stations.containsKey(current.station.getId())) {
+                            transferStartTime = step.stations.get(current.station.getId());
+                            break;
+                        }
+                    }
+                }
+                arrivalTotal = transferStartTime + wait + ride;
+
+                if (lastBusNumber != null) {
+                    newSteps.add(new RouteStepInternal(RouteStepInternal.Type.TRANSFER, wait));
+                }
+
+                Map<Integer, Integer> map = new LinkedHashMap<>();
+                map.put(edge.to.getId(), arrivalTotal);
+                RouteStepInternal newBusStep = new RouteStepInternal(RouteStepInternal.Type.BUS, String.valueOf(edge.busNumber), map);
                 newSteps.add(newBusStep);
 
                 newTransfers++;
@@ -297,7 +399,7 @@ public class RouteFinder {
             }
             queue.clear();
             // Теперь добавляем в очередь
-            queue.add(new PathNode(edge.to, newSteps, current.totalTime + edge.time, newTransfers));
+            queue.add(new PathNode(edge.to, newSteps, current.totalTime + edge.time + wait, newTransfers));
         }
 
         processQueue(queue, visited, graph, endStations, endPoint, callback);
@@ -310,22 +412,61 @@ public class RouteFinder {
     private List<Step> convertToSteps(List<RouteStepInternal> internalSteps) {
         Log.e("RouteFinder", "convertToSteps: internalSteps size=" + internalSteps.size());
         List<Step> steps = new ArrayList<>();
+
         for (RouteStepInternal internalStep : internalSteps) {
             switch (internalStep.type) {
                 case WALK:
-                    steps.add(new Step.Walk());
+                    steps.add(new Step.Walk(String.valueOf(internalStep.duration)));
                     break;
+
                 case BUS:
-                    steps.add(new Step.Bus(internalStep.busNumber, internalStep.stations));
+                    List<Integer> stopIds = new ArrayList<>();
+                    List<Integer> arrivalTimes = new ArrayList<>();
+
+                    for (Map.Entry<Integer, Integer> entry : internalStep.stations.entrySet()) {
+                        stopIds.add(entry.getKey());
+                        arrivalTimes.add(entry.getValue());
+                    }
+
+                    List<String> stopNames = db.getStationsByIDs(stopIds);
+                    List<StopModel> stopModels = new ArrayList<>();
+
+                    for (int i = 0; i < stopIds.size(); i++) {
+                        StopModel stop = new StopModel(stopIds.get(i), stopNames.get(i), arrivalTimes.get(i).toString());
+                        stopModels.add(stop);
+                    }
+
+                    steps.add(new Step.Bus(internalStep.busNumber, stopModels));
                     break;
+
                 case TRANSFER:
-                    steps.add(new Step.Transfer("Пересадка"));
+                    steps.add(new Step.Transfer(String.valueOf(internalStep.duration)));
                     break;
             }
         }
+
         Log.e("RouteFinder", "convertToSteps: steps size=" + steps.size());
         return steps;
     }
+
+    private int getCumulativePredictedTime(int busNumber, int stationId) {
+        List<Route> matchingRoutes = allRoutes.stream()
+                .filter(route -> route.getBus() == busNumber)
+                .collect(Collectors.toList());
+
+        for (Route route : matchingRoutes) {
+            List<Integer> stationIds = parseStationIds(route.getStop());
+            int index = stationIds.indexOf(stationId);
+            if (index != -1 && routeTimeMap.containsKey(busNumber)) {
+                List<Integer> cumulative = routeTimeMap.get(busNumber);
+                if (index < cumulative.size()) {
+                    return cumulative.get(index);
+                }
+            }
+        }
+        return 0;
+    }
+
     private List<Float> parseTimeIntervals(String timeStr) {
         List<Float> times = new ArrayList<>();
         if (timeStr == null || timeStr.isEmpty()) return times;
@@ -342,6 +483,7 @@ public class RouteFinder {
         }
         return times;
     }
+
     private Map<Station, List<Edge>> buildGraph() {
         Log.e("RouteFinder", "buildGraph: Start");
         Map<Station, List<Edge>> graph = new HashMap<>();
@@ -363,10 +505,18 @@ public class RouteFinder {
                 continue;
             }
 
-            float totalTime = baseTimes.stream().reduce(0f, Float::sum);
             // получить прогнозируемое время
-            List<Integer> predictedTimes = predictTimes(baseTimes,distances, dayOfWeek, hour, isPeak, weather, traffic, season, totalTime);
-
+            List<Integer> predictedTimes = predictTimes(baseTimes,distances, dayOfWeek, hour, isPeak, weather, traffic, season);
+            // построение кумулятивного времени
+            List<Integer> cumulativeTimes = new ArrayList<>();
+            int sum = 0;
+            cumulativeTimes.add(0); // первая остановка всегда 0
+            for (int time : predictedTimes) {
+                sum += time;
+                cumulativeTimes.add(sum);
+            }
+            // сохраняем в мапу по номеру маршрута
+            routeTimeMap.put(route.getBus(), cumulativeTimes);
             for (int i = 0; i < stationIds.size() - 1; i++) {
                 Station fromStation = findStationById(stationIds.get(i));
                 Station toStation = findStationById(stationIds.get(i + 1));
@@ -378,6 +528,7 @@ public class RouteFinder {
                 Log.d("RouteFinder", "Маршрут " + route.getBus() + ": " +
                         fromStation.getName() + " → " + toStation.getName() +
                         " | базовое: " + originalTime + " мин → предсказано: " + predictedTime + " мин");
+
                 graph.computeIfAbsent(fromStation, k -> new ArrayList<>())
                         .add(new Edge(toStation, predictedTime, route.getBus()));
             }
@@ -508,7 +659,7 @@ public class RouteFinder {
     }
 
     private void estimateWalkTime(Point from, Point to, EstimateCallback callback) {
-        //Log.e(TAG, "estimateWalkTime: Request pedestrian route from "+ formatPoint(from) + " to " + formatPoint(to));
+        Log.e(TAG, "estimateWalkTime: Request pedestrian route from "+ formatPoint(from) + " to " + formatPoint(to));
 
         // Заодно: MapKitFactory.initialize() делаем один раз в Application.onCreate()
         PedestrianRouter router = TransportFactory.getInstance().createPedestrianRouter();
@@ -523,13 +674,14 @@ public class RouteFinder {
         router.requestRoutes(pts, timeOptions, new Session.RouteListener() {
             @Override
             public void onMasstransitRoutes(@NonNull List<com.yandex.mapkit.transport.masstransit.Route> routes) {
-                //Log.e(TAG, "estimateWalkTime:onMasstransitRoutes: got " + routes.size() + " routes");
+                Log.e(TAG, "estimateWalkTime:onMasstransitRoutes: got " + routes.size() + " routes");
                 if (routes.isEmpty()) {
                     callback.onEstimated(Integer.MAX_VALUE);
                 } else {
                     int sec = (int)routes.get(0).getMetadata().getWeight().getTime().getValue();
                     int min = sec / 60;
-                    //Log.e(TAG, "estimateWalkTime: best route time = " + min + " min");
+                    if(min==0){min = 1;}
+                    Log.e(TAG, "estimateWalkTime: best route time = " + min + " min");
                     callback.onEstimated(min);
                 }
             }
@@ -574,12 +726,19 @@ public class RouteFinder {
 
         Type type;
         String busNumber;
-        List<Integer> stations;
+        Map<Integer, Integer> stations; // stationId -> arrivalTime
 
-        RouteStepInternal(Type type, String busNumber, List<Integer> stations) {
+        RouteStepInternal(Type type, String busNumber, Map<Integer, Integer> stations) {
             this.type = type;
             this.busNumber = busNumber;
             this.stations = stations;
+        }
+        int duration; // Только для WALK и TRANSFER
+
+        // WALK или TRANSFER
+        RouteStepInternal(Type type, int duration) {
+            this.type = type;
+            this.duration = duration;
         }
     }
 

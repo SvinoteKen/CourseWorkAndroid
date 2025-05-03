@@ -2,6 +2,7 @@ package com.example.transporttimetable.helpers;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,8 +33,13 @@ public class StepsAdapter extends BaseAdapter {
         for (Step step : steps) {
             if (step instanceof Step.Bus) {
                 Step.Bus bus = (Step.Bus) step;
-                stepItems.addAll(bus.stops); // Каждая остановка — отдельный элемент
-            } else {
+                Log.d("StepsAdapter", "Добавляем автобус с " + bus.stops.size() + " остановками");
+                stepItems.addAll(bus.stops);
+            } else if (step instanceof Step.Walk) {
+                Log.d("StepsAdapter", "Добавляем Walk: " + ((Step.Walk) step).getTime() + " минут");
+                stepItems.add(step);
+            } else if (step instanceof Step.Transfer) {
+                Log.d("StepsAdapter", "Добавляем Transfer: " + ((Step.Transfer) step).time + " минут");
                 stepItems.add(step);
             }
         }
@@ -76,6 +82,10 @@ public class StepsAdapter extends BaseAdapter {
         if (viewType == 0) {
             if (convertView == null)
                 convertView = inflater.inflate(R.layout.item_walk, parent, false);
+            TextView stopTime = convertView.findViewById(R.id.walk_time);
+            Step.Walk walk = (Step.Walk) stepItems.get(position);
+            String s = "Пешком "+ walk.getTime() + " минут";
+            stopTime.setText(s);
             // Walk — ничего не отображаем, просто иконка
         } else if (viewType == 1) {
             if (convertView == null)
@@ -84,12 +94,14 @@ public class StepsAdapter extends BaseAdapter {
             TextView stopName = convertView.findViewById(R.id.stop_name);
             TextView stopTime = convertView.findViewById(R.id.stop_time);
             stopName.setText(stop.name);
-            stopTime.setText(stop.time);
+            String s = stop.time + " мин.";
+            stopTime.setText(s);
         } else if (viewType == 2) {
             if (convertView == null)
                 convertView = inflater.inflate(R.layout.item_transfer, parent, false);
             Step.Transfer transfer = (Step.Transfer) stepItems.get(position);
             TextView transferTime = convertView.findViewById(R.id.transfer_time);
+            String s = transfer.time + " мин.";
             transferTime.setText(transfer.time);
         }
 

@@ -11,14 +11,10 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.transporttimetable.R;
@@ -218,71 +214,70 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
 
             }
         });
-        ArrayList<RequestPoint> points = new ArrayList<>();
-        TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
-        Point firstElement = new Point(48.063442, 37.772343);
-        Point lastElement = new Point(48.013572, 37.865598);
-        descrip = "ДС Центр - Герцена";
-        ID_BUS = 7;
-        IDD = 3;
-        Rev = false;
-        busNumber = "4";
-        points.add(new RequestPoint(new Point(firstElement.getLatitude(),
-                firstElement.getLongitude()),RequestPointType.WAYPOINT, ""));
-        points.add(new RequestPoint(new Point(lastElement.getLatitude(),
-                lastElement.getLongitude()), RequestPointType.WAYPOINT, ""));
-        // drivingSession = drivingRouter.requestRoutes(points,transitOptions,this);
-        DbHelper db = new DbHelper(this);
-        List<Station> stations = db.getStations();
-        List<com.example.transporttimetable.models.Route> routes = db.getRoutes();
-        long startTime = System.currentTimeMillis();
-        RouteFinder rf = new RouteFinder(this, stations, routes);
-        rf.findRoutes(firstElement, lastElement, new RouteFinder.RouteCallback() {
-            @Override
-            public void onRoutesFound(List<FoundRoute> routes) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                double seconds = elapsed / 1000.0;
-                Log.e("RouteFinder", String.format("Время построения маршрутов: %.1f сек", seconds));
-                // Здесь обработка результата
-                if (routes.isEmpty()) {
-                    Log.e("RouteFinder", "Маршруты не найдены");
-                } else {
-                    for (FoundRoute route : routes) {
-                        // Логируем общую информацию о маршруте
-                        Log.e("RouteFinder", "=== Новый FoundRoute ===");
-                        Log.e("RouteFinder", "TotalTime (мин): " + route.getTotalTime());
-                        Log.e("RouteFinder", "Number of parts: " + route.parts.size());
-
-                        // Пробегаемся по каждому шагу
-                        for (int i = 0; i < route.parts.size(); i++) {
-                            Step step = route.parts.get(i);
-                            if (step instanceof Step.Walk) {
-                                Log.e("RouteFinder", String.format(
-                                        "Part %d: WALK (пешком)", i
-                                ));
-                            }
-                            else if (step instanceof Step.Bus) {
-                                Step.Bus bus = (Step.Bus) step;
-                                Log.e("RouteFinder", String.format(
-                                        "Part %d: BUS №%s, stops IDs = %s",
-                                        i,
-                                        bus.getBusNumber(),
-                                        bus.getStations().toString()
-                                ));
-                            }
-                            else if (step instanceof Step.Transfer) {
-                                Step.Transfer tr = (Step.Transfer) step;
-                                Log.e("RouteFinder", String.format(
-                                        "Part %d: TRANSFER, wait time = %s",
-                                        i,
-                                        tr.time
-                                ));
-                            }
-                        }
-                    }
-                }
-            }
-        });
+//        ArrayList<RequestPoint> points = new ArrayList<>();
+//        TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
+//        Point firstElement = new Point(48.063442, 37.772343);
+//        Point lastElement = new Point(48.013572, 37.865598);
+//        descrip = "ДС Центр - Герцена";
+//        ID_BUS = 7;
+//        IDD = 3;
+//        Rev = false;
+//        busNumber = "4";
+//        points.add(new RequestPoint(new Point(firstElement.getLatitude(),
+//                firstElement.getLongitude()),RequestPointType.WAYPOINT, ""));
+//        points.add(new RequestPoint(new Point(lastElement.getLatitude(),
+//                lastElement.getLongitude()), RequestPointType.WAYPOINT, ""));
+//        // drivingSession = drivingRouter.requestRoutes(points,transitOptions,this);
+//        DbHelper db = new DbHelper(this);
+//        List<Station> stations = db.getStations();
+//        List<com.example.transporttimetable.models.Route> routes = db.getRoutes();
+//        long startTime = System.currentTimeMillis();
+//        RouteFinder rf = new RouteFinder(this, stations, routes);
+//        rf.findRoutes(firstElement, lastElement, new RouteFinder.RouteCallback() {
+//            @Override
+//            public void onRoutesFound(List<FoundRoute> routes) {
+//                long elapsed = System.currentTimeMillis() - startTime;
+//                double seconds = elapsed / 1000.0;
+//                Log.e("RouteFinder", String.format("Время построения маршрутов: %.1f сек", seconds));
+//                // Здесь обработка результата
+//                if (routes.isEmpty()) {
+//                    Log.e("RouteFinder", "Маршруты не найдены");
+//                } else {
+//                    for (FoundRoute route : routes) {
+//                        // Логируем общую информацию о маршруте
+//                        Log.e("RouteFinder", "=== Новый FoundRoute ===");
+//                        Log.e("RouteFinder", "TotalTime (мин): " + route.getTotalTime());
+//                        Log.e("RouteFinder", "Number of parts: " + route.parts.size());
+//
+//                        // Пробегаемся по каждому шагу
+//                        for (int i = 0; i < route.parts.size(); i++) {
+//                            Step step = route.parts.get(i);
+//                            if (step instanceof Step.Walk) {
+//                                Log.e("RouteFinder", String.format(
+//                                        "Part %d: WALK (пешком)", i
+//                                ));
+//                            }
+//                            else if (step instanceof Step.Bus) {
+//                                Step.Bus bus = (Step.Bus) step;
+//                                Log.e("RouteFinder", String.format(
+//                                        "Part %d: BUS №%s",
+//                                        i,
+//                                        bus.getBusNumber()
+//                                ));
+//                            }
+//                            else if (step instanceof Step.Transfer) {
+//                                Step.Transfer tr = (Step.Transfer) step;
+//                                Log.e("RouteFinder", String.format(
+//                                        "Part %d: TRANSFER, wait time = %s",
+//                                        i,
+//                                        tr.time
+//                                ));
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        });
 //        ArrayList<Station> st = db.getRoutByBus(7);
 //        StringBuilder distancesSb = new StringBuilder();
 //        distancesSb.append(",");
@@ -325,41 +320,75 @@ public class MapsActivity extends AppCompatActivity implements Session.RouteList
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
             GridView gridView = findViewById(R.id.routesGridView);
-//            List<RouteModel> routes = new ArrayList<>();
-//
-//            routes.add(new RouteModel(
-//                    "07:00–07:30 (30 мин, 10 остановок)",
-//                    Arrays.asList(
-//                            new Step.Walk(),
-//                            new Step.Bus("3", Arrays.asList(
-//                                    new StopModel(1,"Остановка 1", "07:05"),
-//                                    new StopModel(2,"Остановка 2", "07:10"),
-//                                    new StopModel(3, "Остановка 3", "07:15")
-//                            )),
-//                            new Step.Transfer("13 мин"),
-//                            new Step.Bus("49", Arrays.asList(
-//                                    new StopModel(4,"Остановка 4", "07:20"),
-//                                    new StopModel(5,"Остановка 5", "07:25"),
-//                                    new StopModel(6,"Остановка 6", "07:30")
-//                            )),
-//                            new Step.Walk()
-//                    )));
-//
-//            routes.add(new RouteModel(
-//                    "07:10–07:40 (30 мин, 12 остановок)",
-//                    Arrays.asList(
-//                            new Step.Walk(),
-//                            new Step.Bus("122", Arrays.asList(
-//                                    new StopModel(1,"Остановка 7", "07:15"),
-//                                    new StopModel(2,"Остановка 8", "07:20"),
-//                                    new StopModel(3,"Остановка 9", "07:25"),
-//                                    new StopModel(4,"Остановка 10", "07:30")
-//                            )),
-//                            new Step.Walk()
-//                    )));
-//
-//            RouteAdapter routeAdapter = new RouteAdapter(this, routes);
-//            gridView.setAdapter(routeAdapter);
+            ArrayList<RequestPoint> points = new ArrayList<>();
+            TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
+            Point firstElement = new Point(48.063442, 37.772343);
+            Point lastElement = new Point(48.013572, 37.865598);
+            descrip = "ДС Центр - Герцена";
+            ID_BUS = 7;
+            IDD = 3;
+            Rev = false;
+            busNumber = "4";
+            points.add(new RequestPoint(new Point(firstElement.getLatitude(),
+                    firstElement.getLongitude()),RequestPointType.WAYPOINT, ""));
+            points.add(new RequestPoint(new Point(lastElement.getLatitude(),
+                    lastElement.getLongitude()), RequestPointType.WAYPOINT, ""));
+            // drivingSession = drivingRouter.requestRoutes(points,transitOptions,this);
+            DbHelper db = new DbHelper(this);
+            List<Station> stations = db.getStations();
+            List<com.example.transporttimetable.models.Route> routes = db.getRoutes();
+            long startTime = System.currentTimeMillis();
+            RouteFinder rf = new RouteFinder(this, stations, routes);
+            rf.findRoutes(firstElement, lastElement, new RouteFinder.RouteCallback() {
+                @Override
+                public void onRoutesFound(List<FoundRoute> routes) {
+                    long elapsed = System.currentTimeMillis() - startTime;
+                    double seconds = elapsed / 1000.0;
+                    Log.e("RouteFinder", String.format("Время построения маршрутов: %.1f сек", seconds));
+                    // Здесь обработка результата
+                    if (routes.isEmpty()) {
+                        Log.e("RouteFinder", "Маршруты не найдены");
+                    } else {
+                        RouteAdapter routeAdapter = new RouteAdapter(MapsActivity.this, routes);
+                        gridView.setAdapter(routeAdapter);
+                        for (FoundRoute route : routes) {
+
+                            // Логируем общую информацию о маршруте
+                            Log.e("RouteFinder", "=== Новый FoundRoute ===");
+                            Log.e("RouteFinder", "TotalTime (мин): " + route.getTotalTime());
+                            Log.e("RouteFinder", "Number of parts: " + route.parts.size());
+
+                            // Пробегаемся по каждому шагу
+                            for (int i = 0; i < route.parts.size(); i++) {
+                                Step step = route.parts.get(i);
+                                if (step instanceof Step.Walk) {
+                                    Log.e("RouteFinder", String.format(
+                                            "Part %d: WALK (пешком)", i
+                                    ));
+                                }
+                                else if (step instanceof Step.Bus) {
+                                    Step.Bus bus = (Step.Bus) step;
+                                    Log.e("RouteFinder", String.format(
+                                            "Part %d: BUS №%s",
+                                            i,
+                                            bus.getBusNumber()
+                                    ));
+                                }
+                                else if (step instanceof Step.Transfer) {
+                                    Step.Transfer tr = (Step.Transfer) step;
+                                    Log.e("RouteFinder", String.format(
+                                            "Part %d: TRANSFER, wait time = %s",
+                                            i,
+                                            tr.time
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+
             GridView routesGridView = findViewById(R.id.routesGridView);
             Button showAllButton = findViewById(R.id.showAllVariantsButton);
 

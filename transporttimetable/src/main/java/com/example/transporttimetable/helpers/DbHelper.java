@@ -120,6 +120,9 @@ public class DbHelper{
         return builder.toString();
     }
 
+    public ArrayList<Bus> getBuses() {
+        return new ArrayList<>(busList);
+    }
     public ArrayList<Station> getStations() {
         return new ArrayList<>(stationList);
     }
@@ -142,6 +145,18 @@ public class DbHelper{
         for (Bus b : busList) {
             if (b.getTransportType() == type) {
                 result.add(b);
+            }
+        }
+        return result;
+    }
+    public ArrayList<String> getStationsByIDs(List<Integer> ids) {
+        ArrayList<String> result = new ArrayList<>();
+        for (Integer id : ids) {
+            for (Station station : stationList) {
+                if (station.getId() == id) {
+                    result.add(station.getName());
+                    break;
+                }
             }
         }
         return result;
@@ -231,7 +246,7 @@ public class DbHelper{
         ArrayList<Station> result = new ArrayList<>();
 
         for (Route route : routeList) {
-            if (route.getBus() == busId && route.getReversed() == reversed) {
+            if (route.getBus() == busId) {
                 String[] idArray = route.getStop().split(",");
                 List<Integer> stationIds = new ArrayList<>();
                 for (int i = 1; i < idArray.length; i++) {

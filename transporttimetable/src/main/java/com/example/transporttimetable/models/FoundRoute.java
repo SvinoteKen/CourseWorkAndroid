@@ -13,5 +13,8 @@ public class FoundRoute {
     public int getTotalTime() {
         return totalTime;
     }
+    public List<Step> getSteps() {
+        return parts;
+    }
 }
 

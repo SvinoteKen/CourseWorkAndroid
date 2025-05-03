@@ -30,7 +30,7 @@ public class DbFetcher {
     }
 
     public void fetchAllDataFromDB(Runnable onComplete) {
-        fetchAllStations(() -> fetchAllBuses(() -> fetchAllRoutes(onComplete)));
+        //fetchAllStations(() -> fetchAllBuses(() -> fetchAllRoutes(onComplete)));
     }
     private void fetchAllStations(Runnable next) {
         localStations.clear();

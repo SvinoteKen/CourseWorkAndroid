@@ -8,18 +8,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.transporttimetable.R;
-import com.example.transporttimetable.models.RouteModel;
+import com.example.transporttimetable.models.FoundRoute;
 import com.example.transporttimetable.models.Step;
 
 import java.util.List;
@@ -27,11 +22,11 @@ import java.util.List;
 public class RouteAdapter extends BaseAdapter {
 
     private final Context context;
-    private final List<RouteModel> routeList;
+    private final List<FoundRoute> routeList;
     private final LayoutInflater inflater;
     private int expandedPosition = -1; // для отслеживания открытого маршрута
 
-    public RouteAdapter(Context context, List<RouteModel> routes) {
+    public RouteAdapter(Context context, List<FoundRoute> routes) {
         this.context = context;
         this.routeList = routes;
         this.inflater = LayoutInflater.from(context);
@@ -81,9 +76,9 @@ public class RouteAdapter extends BaseAdapter {
 
         // вычисляем, какой элемент из routeList мы сейчас отображаем
         int actualPosition = (expandedPosition == -1 ? position : expandedPosition);
-        RouteModel route = routeList.get(actualPosition);
-
-        holder.timeRange.setText(route.getTimeRange());
+        FoundRoute route = routeList.get(actualPosition);
+        String t =  ""+route.totalTime;
+        holder.timeRange.setText(t);
 
         // рисуем summary
         holder.routeContainer.removeAllViews();
@@ -116,7 +111,7 @@ public class RouteAdapter extends BaseAdapter {
                 clock.setLayoutParams(new LinearLayout.LayoutParams(40, 40));
 
                 TextView timeText = new TextView(context);
-                timeText.setText(((Step.Transfer) step).time);
+                timeText.setText(((Step.Transfer) step).time + " мин");
                 timeText.setTextColor(Color.WHITE);
                 timeText.setTextSize(14f);
                 timeText.setPadding(8, 0, 0, 0);
